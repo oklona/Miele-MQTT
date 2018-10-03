@@ -208,8 +208,8 @@ if ($dump == false) {
 		$appliance_type=$appliance['ident']['type']['value_localized'];
 		switch ($appliance_type) {
 			case "Dishwasher":
-				$programStatus=$appliance['state']['status']['value_localized'];
-				$programType=$appliance['state']['programType']['value_raw'];
+				$programStatus='"' . $appliance['state']['status']['value_localized'] . '"';
+				$programType='"' . $appliance['state']['programType']['value_raw'] . '"';
 				$programPhaseRaw=$appliance['state']['programPhase']['value_raw'];
 				switch ($programPhaseRaw) {
 					case "1792":
