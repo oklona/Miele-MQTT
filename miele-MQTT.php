@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 0.1
+######		Version 0.11
 ######
 ################################################################################################################################################
 
@@ -90,49 +90,66 @@ function publish($mosquitto_command,$mosquitto_host,$topic, $pubdata) {
 ################################################################################################################################################
 ######		createconfig - Function to prompt for config data, and create config file.
 ################################################################################################################################################
-function createconfig() {	
+function createconfig($refresh=false) {	
 	$configcreated=false;
 	$tokenscreated=false;
-	
-	$userid=readline("Username (email) to connect with: ");
-	$password=prompt_silent("Please type your password: ");
-	$country=readline('Please state country in the form of "no-no, en-en, etc.": ');
 
-	$client_id=readline('Please input the client ID assigned to you by Miele API administrators: ');
-	$client_secret=readline('Please input the Client Secret assigned to you by Miele: ');
-	
-	$mosquitto_command=readline('Type the full path to your mosquitto_pub binary: ');
-	$mosquitto_host=readline("Type the name of your mosquitto host (leave blank if localhost): ");
-	$topicbase=readline('Type the base topic name to use for Mosquitto (default: "/miele/": ');
-	if (strlen($topicbase) == 0) {
-		$topicbase="/miele/";
-	}
-	if (substr($topicbase,-1) <> "/") {
-		$topicbase = $topicbase . "/";
-	}
-
-	$authorization='';
-	$url="https://api.mcs3.miele.com/thirdparty/auth";
-	$postdata='email=' . urlencode($userid) . '&password=' . urlencode($password) . '&redirect_uri=%2Fv1%2Fdevices&state=login&response_type=code&client_id=' . $client_id . '&vgInformationSelector=' . $country;
-
-	$method="POST";
 	$content="application/x-www-form-urlencoded";
 
-	$data=getRESTData($url,$postdata,$method,$content);
+	if($refresh == false) {
+		
+		$userid=readline("Username (email) to connect with: ");
+		$password=prompt_silent("Please type your password: ");
+		$country=readline('Please state country in the form of "no-no, en-en, etc.": ');
 
-	if (is_array($data) == FALSE){
-		$params=(explode('?',$data))[1];
-		foreach (explode('&', $params) as $part) {
-			$param=explode("=",$part);
-			
-			if(strstr($param[0],'code') <> FALSE ) {
-				$code=$param[1];
+		$client_id=readline('Please input the client ID assigned to you by Miele API administrators: ');
+		$client_secret=readline('Please input the Client Secret assigned to you by Miele: ');
+		
+		$mosquitto_command=readline('Type the full path to your mosquitto_pub binary: ');
+		$mosquitto_host=readline("Type the name of your mosquitto host (leave blank if localhost): ");
+		$topicbase=readline('Type the base topic name to use for Mosquitto (default: "/miele/": ');
+		if (strlen($topicbase) == 0) {
+			$topicbase="/miele/";
+		}
+		if (substr($topicbase,-1) <> "/") {
+			$topicbase = $topicbase . "/";
+		}
+		$authorization='';
+		$url="https://api.mcs3.miele.com/thirdparty/auth";
+		$postdata='email=' . urlencode($userid) . '&password=' . urlencode($password) . '&redirect_uri=%2Fv1%2Fdevices&state=login&response_type=code&client_id=' . $client_id . '&vgInformationSelector=' . $country;
+	
+		$method="POST";
+	
+		$data=getRESTData($url,$postdata,$method,$content);
+	
+		if (is_array($data) == FALSE){
+			$params=(explode('?',$data))[1];
+			foreach (explode('&', $params) as $part) {
+				$param=explode("=",$part);
+				
+				if(strstr($param[0],'code') <> FALSE ) {
+					$code=$param[1];
+				}
 			}
 		}
+		else {
+			return $configcreated;
+		}
+	
 	}
 	else {
-		return $configcreated;
+		echo "Refreshing configuration / authorization..." . PHP_EOL;
+		global $config;
+		$code=$config['code'];
+		$client_secret=$config['client_secret'];
+		$client_id=$config['client_id'];
+		$mosquitto_command=$config['mosquitto_command'];
+		$mosquitto_host=$config['mosquitto_host'];
+		$topicbase=$config['topicbase'];
+		
+		rename('miele-config.php','miele-config.php.org');
 	}
+
 
 	if (strlen($code) >> 0 ) {
 		$url='https://api.mcs3.miele.com/thirdparty/token?client_id=' . urlencode($client_id) . '&client_secret=' . $client_secret . '&code=' . $code . '&redirect_uri=%2Fv1%2Fdevices&grant_type=authorization_code&state=token';
@@ -146,6 +163,9 @@ function createconfig() {
 
 	if($tokenscreated == true ) {
 		$config="<?php" . PHP_EOL . "return array(" . PHP_EOL . "        'access_token'=> '" . $access_token . "'," . PHP_EOL . "        'refresh_token'=> '" . $refresh_token . "'," . PHP_EOL;
+		$config = $config . "	'client_id'=> '" . $client_id . "'," . PHP_EOL;
+		$config = $config . "	'client_secret'=> '" . $client_secret . "'," . PHP_EOL;
+		$config = $config . "	'code'=> '" . $code . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_command'=> '" . $mosquitto_command . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_host'=> '" . $mosquitto_host . "'," . PHP_EOL;
 		$config = $config . "	'topicbase'=> '" . $topicbase . "'" . PHP_EOL;
@@ -196,6 +216,13 @@ if (strlen($config['access_token']) >> 0 ) {
 	$mosquitto_host= $config['mosquitto_host'];
 	$method='GET';
 	$data=getRESTData($url,'',$method,'',$authorization);
+	if (array_search("Unauthorized",$data) != "" ) {
+		createconfig(true);
+		$config = include('miele-config.php');
+		$authorization='Bearer ' . $config['access_token'];
+		$method='GET';
+		$data=getRESTData($url,'',$method,'',$authorization);
+	}
 	if ($dump == true ) {
 		var_dump($data);
 	}
@@ -208,8 +235,8 @@ if ($dump == false) {
 		$appliance_type=$appliance['ident']['type']['value_localized'];
 		switch ($appliance_type) {
 			case "Dishwasher":
-				$programStatus='"' . $appliance['state']['status']['value_localized'] . '"';
-				$programType='"' . $appliance['state']['programType']['value_raw'] . '"';
+				$programStatus=$appliance['state']['status']['value_localized'];
+				$programType=$appliance['state']['programType']['value_raw'];
 				$programPhaseRaw=$appliance['state']['programPhase']['value_raw'];
 				switch ($programPhaseRaw) {
 					case "1792":
