@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 0.11
+######		Version 0.12
 ######
 ################################################################################################################################################
 
@@ -93,6 +93,7 @@ function publish($mosquitto_command,$mosquitto_host,$topic, $pubdata) {
 function createconfig($refresh=false) {	
 	$configcreated=false;
 	$tokenscreated=false;
+	global $folder;
 
 	$content="application/x-www-form-urlencoded";
 
@@ -147,7 +148,7 @@ function createconfig($refresh=false) {
 		$mosquitto_host=$config['mosquitto_host'];
 		$topicbase=$config['topicbase'];
 		
-		rename('miele-config.php','miele-config.php.org');
+		rename($folder . '/miele-config.php',$folder . '/miele-config.php.org');
 	}
 
 
@@ -171,7 +172,7 @@ function createconfig($refresh=false) {
 		$config = $config . "	'topicbase'=> '" . $topicbase . "'" . PHP_EOL;
 		$config = $config . ");" . PHP_EOL . "?>" . PHP_EOL . PHP_EOL;
 
-		if (file_put_contents("miele-config.php", $config) <> false ) {
+		if (file_put_contents($folder . "/miele-config.php", $config) <> false ) {
 			echo "Configuration file created!" . PHP_EOL;
 			$configcreated=true;
 		}
@@ -185,6 +186,7 @@ function createconfig($refresh=false) {
 ######		This is the main script block
 ######
 ################################################################################################################################################
+$folder=dirname($_SERVER['PHP_SELF']);
 
 if(count($argv) >> 1 ) {
 	if ($argv[1] == '-d') {
@@ -195,15 +197,14 @@ else {
 	$dump=false;
 }
 
-if (file_exists('miele-config.php') == false ) {
+if (file_exists($folder . '/miele-config.php') == false ) {
 	$configcreated=createconfig();
 	if($configcreated == false) {
 		exit("Failed to create config! Did you type the correct credentials?" . PHP_EOL);
 	}
 }
 
-$config = include('miele-config.php');
-
+$config = include($folder.'/miele-config.php');
 
 
 $authorization='';
@@ -218,7 +219,7 @@ if (strlen($config['access_token']) >> 0 ) {
 	$data=getRESTData($url,'',$method,'',$authorization);
 	if (array_search("Unauthorized",$data) != "" ) {
 		createconfig(true);
-		$config = include('miele-config.php');
+		$config = include($folder . '/miele-config.php');
 		$authorization='Bearer ' . $config['access_token'];
 		$method='GET';
 		$data=getRESTData($url,'',$method,'',$authorization);
@@ -228,6 +229,7 @@ if (strlen($config['access_token']) >> 0 ) {
 	}
 }
 
+
 if ($dump == false) {
 	foreach ($data as $appliance) {
 		$appliance_id=$appliance['ident']['deviceIdentLabel']['fabNumber'];
@@ -235,8 +237,8 @@ if ($dump == false) {
 		$appliance_type=$appliance['ident']['type']['value_localized'];
 		switch ($appliance_type) {
 			case "Dishwasher":
-				$programStatus=$appliance['state']['status']['value_localized'];
-				$programType=$appliance['state']['programType']['value_raw'];
+				$programStatus='"' . $appliance['state']['status']['value_localized'] . '"';
+				$programType='"' . $appliance['state']['programType']['value_raw'] . '"';
 				$programPhaseRaw=$appliance['state']['programPhase']['value_raw'];
 				switch ($programPhaseRaw) {
 					case "1792":
