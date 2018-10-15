@@ -237,40 +237,236 @@ if ($dump == false) {
 		$appliance_type=$appliance['ident']['type']['value_localized'];
 		switch ($appliance_type) {
 			case "Dishwasher":
-				$programStatus='"' . $appliance['state']['status']['value_localized'] . '"';
-				$programType='"' . $appliance['state']['programType']['value_raw'] . '"';
+				$programStatus=$appliance['state']['status']['value_localized'];
+				$programType=$appliance['state']['programType']['value_raw'];
 				$programPhaseRaw=$appliance['state']['programPhase']['value_raw'];
 				switch ($programPhaseRaw) {
 					case "1792":
 						// Purpose unknown, observed when programmed (without phase) and off.
-						$programPhase="'Not running'";
+						$programPhase="Not running";
+						break;
+					case "1793":
+						$programPhase="Reactivating";
 						break;
 					case "1794":
-						$programPhase="'Pre-wash'";
+						$programPhase="Pre-wash";
 						break;
 					case "1795":
-						$programPhase="'Main wash'";
+						$programPhase="Main wash";
 						break;
 					case "1796":
-						$programPhase="'Rinse'";
+						$programPhase="Rinse";
+						break;
+					case "1797":
+						$programPhase="Interim Rinse";
 						break;
 					case "1798":
-						$programPhase="'Final rinse'";
+						$programPhase="Final rinse";
 						break;
 					case "1799":
-						$programPhase="'Drying'";
+						$programPhase="Drying";
+						break;
+					case "1800":
+						$programPhase="Finished";
+						break;
+					case "1801":
+						$programPhase="Pre-Wash";
 						break;
 					default:
-						$programPhase="'Unknown: " . $programPhaseRaw . "'";
+						$programPhase="Unknown: " . $programPhaseRaw;
 						break;
 				}
 				$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
 				$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
 				$topicbase = $topicbase . $appliance_id . '/';
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", $appliance_type );
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", $programStatus);
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", $programType);
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", $programPhase);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", "'".$appliance_type."'" );
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", "'".$programStatus."'");
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", "'".$programType."'");
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", "'".$programPhase."'");
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeLeft", $timeleft);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeRunning", $timerunning);
+				echo "Appliance type: " . $appliance_type . PHP_EOL;
+				echo "Program status: " . $programStatus . PHP_EOL;
+				echo "Program type: " . $programType . PHP_EOL;
+				echo "Program phase: " . $programPhase . PHP_EOL;
+				echo "Time left: " . $timeleft . PHP_EOL;
+				echo "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+				break;
+			case "Washing Machine":
+				$programStatus=$appliance['state']['status']['value_localized'];
+				$programType= $appliance['state']['programType']['value_raw'];
+				$programPhaseRaw=$appliance['state']['programPhase']['value_raw'];
+				switch ($programPhaseRaw) {
+					case "256":
+						// Purpose unknown, observed when programmed (without phase) and off.
+						$programPhase="Not running";
+						break;
+					case "257":
+						$programPhase="Pre-Wash";
+						break;
+					case "258":
+						$programPhase="Soak";
+						break;
+					case "259":
+						$programPhase="Pre-Wash";
+						break;
+					case "260":
+						$programPhase="Main Wash";
+						break;
+					case "261":
+						$programPhase="Rinse";
+						break;
+					case "262":
+						$programPhase="Rinse Hold";
+						break;
+					case "263":
+						$programPhase="Main Wash";
+						break;
+					case "264":
+						$programPhase="Cooling down";
+						break;
+					case "265":
+						$programPhase="Drain";
+						break;
+					case "266":
+						$programPhase="Spin";
+						break;
+					case "267":
+						$programPhase="Anti-crease";
+						break;
+					case "268":
+						$programPhase="Finished";
+						break;
+					case "269":
+						$programPhase="Venting";
+						break;
+					case "270":
+						$programPhase="Starch Stop";
+						break;
+					case "271":
+						$programPhase="Freshen-up + Moisten";
+						break;
+					case "272":
+						$programPhase="Steam Smoothing";
+						break;
+					case "279":
+						$programPhase="Hygiene";
+						break;
+					case "280":
+						$programPhase="Drying";
+						break;
+					case "285":
+						$programPhase="Disinfection";
+						break;
+					case "295":
+						$programPhase="Steam Smoothing";
+						break;
+					default:
+						$programPhase="Unknown: " . $programPhaseRaw;
+						break;
+				}
+				$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
+				$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
+				$topicbase = $topicbase . $appliance_id . '/';
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", "'".$appliance_type."'" );
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", "'".$programStatus."'");
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", "'".$programType."'");
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", "'".$programPhase."'");
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeLeft", $timeleft);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeRunning", $timerunning);
+				echo "Appliance type: " . $appliance_type . PHP_EOL;
+				echo "Program status: " . $programStatus . PHP_EOL;
+				echo "Program type: " . $programType . PHP_EOL;
+				echo "Program phase: " . $programPhase . PHP_EOL;
+				echo "Time left: " . $timeleft . PHP_EOL;
+				echo "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+				break;
+			case "Clothes Dryer":
+				$programStatus=$appliance['state']['status']['value_localized'];
+				$programType= $appliance['state']['programType']['value_raw'];
+				$programPhaseRaw=$appliance['state']['programPhase']['value_raw'];
+				switch ($programPhaseRaw) {
+					case "512":
+						// Purpose unknown, observed when programmed (without phase) and off.
+						$programPhase="Not running";
+						break;
+					case "513":
+						$programPhase="Program Running";
+						break;
+					case "514":
+						$programPhase="Drying";
+						break;
+					case "515":
+						$programPhase="Machine Iron";
+						break;
+					case "516":
+						$programPhase="Hand Iron";
+						break;
+					case "517":
+						$programPhase="Normal";
+						break;
+					case "518":
+						$programPhase="Normal Plus";
+						break;
+					case "519":
+						$programPhase="Cooling down";
+						break;
+					case "520":
+						$programPhase="Hand Iron";
+						break;
+					case "521":
+						$programPhase="Anti-crease";
+						break;
+					case "522":
+						$programPhase="Finished";
+						break;
+					case "523":
+						$programPhase="Extra Dry";
+						break;
+					case "524":
+						$programPhase="Hand Iron";
+						break;
+					case "526":
+						$programPhase="Moisten";
+						break;
+					case "528":
+						$programPhase="Timed Drying";
+						break;
+					case "529":
+						$programPhase="Warm Air";
+						break;
+					case "530":
+						$programPhase="Steam Smoothing";
+						break;
+					case "531":
+						$programPhase="Comfort Cooling";
+						break;
+					case "532":
+						$programPhase="Rinse out lint";
+						break;
+					case "533":
+						$programPhase="Rinses";
+						break;
+					case "534":
+						$programPhase="Smoothing";
+						break;
+					case "538":
+						$programPhase="Slightly Dry";
+						break;						
+					case "539":
+						$programPhase="Safety Cooling";
+						break;
+					default:
+						$programPhase="Unknown: " . $programPhaseRaw;
+					break;
+				}
+				$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
+				$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
+				$topicbase = $topicbase . $appliance_id . '/';
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", "'".$appliance_type."'" );
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", "'".$programStatus."'");
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", "'".$programType."'");
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", "'".$programPhase."'");
 				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeLeft", $timeleft);
 				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeRunning", $timerunning);
 				echo "Appliance type: " . $appliance_type . PHP_EOL;
