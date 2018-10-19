@@ -15,5 +15,5 @@ The script will NOT save your username and password, but it will obtain an autor
 
 The script does NOT work on my Windows 10 installation currently, I hope to be able to do something about that soon.
 
-The code written currently ONLY covers Miele dishwashers. Run the script with parameter "-d" to retrieve all data about your appliances, send it to me, and I can add more appliance-support to the script. -Or you could add to the script through Github (I believe, this is my very first Github project.)
+The code written currently covers Miele dishwashers, washing machines and dryers (thanks, Stoffi!). Run the script with parameter "-d" to retrieve all data about your appliances, send it to me, and I can add more appliance-support to the script. -Or you could add to the script through Github (I believe, this is my very first Github project.)
 
