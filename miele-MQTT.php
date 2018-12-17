@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 0.12
+######		Version 0.13
 ######
 ################################################################################################################################################
 
@@ -76,12 +76,18 @@ function prompt_silent($prompt = "Enter Password:") {
 ######		publish - Function to publish data to Mosquitto
 ################################################################################################################################################
 
-function publish($mosquitto_command,$mosquitto_host,$topic, $pubdata) {
-	if (strlen($mosquitto_host) >> 0 ) {
-		$command = $mosquitto_command . " -t " . $topic . " -h " . $mosquitto_host . " -m " . $pubdata;
+function publish($mosquitto_command,$mosquitto_host,$topic, $pubdata,$mosquitto_user,$mosquitto_pass) {
+	if (strlen($mosquitto_user) >> 0 ) {
+		$mosquitto_login = " -u " . $mosquitto_user . " -P " . $mosquitto_pass;
 	}
 	else {
-		$command = $mosquitto_command . " -t " . $topic . " -m " . $pubdata;
+		$mosquitto_login = "";
+	}
+	if (strlen($mosquitto_host) >> 0 ) {
+		$command = $mosquitto_command . $mosquitto_login . " -t " . $topic . " -h " . $mosquitto_host . " -m " . $pubdata;
+	}
+	else {
+		$command = $mosquitto_command . $mosquitto_login . " -t " . $topic . " -m " . $pubdata;
 	}
     $output = rtrim(shell_exec($command));
     return $output;
@@ -108,6 +114,13 @@ function createconfig($refresh=false) {
 		
 		$mosquitto_command=readline('Type the full path to your mosquitto_pub binary: ');
 		$mosquitto_host=readline("Type the name of your mosquitto host (leave blank if localhost): ");
+		$mosquitto_user=readline("Type login-name for Mosquitto (leave blank if nor using login): ");
+		if (strlen($mosquitto_user) >> 0 ) {
+			$mosquitto_pass=readline("Type the password for your mosquitto user (will be saved in PLAIN text): ");
+		}
+		else {
+			$mosquitto_pass="";
+		}
 		$topicbase=readline('Type the base topic name to use for Mosquitto (default: "/miele/": ');
 		if (strlen($topicbase) == 0) {
 			$topicbase="/miele/";
@@ -146,6 +159,8 @@ function createconfig($refresh=false) {
 		$client_id=$config['client_id'];
 		$mosquitto_command=$config['mosquitto_command'];
 		$mosquitto_host=$config['mosquitto_host'];
+		$mosquitto_user=$config['mosquitto_user'];
+		$mosquitto_pass=$config['mosquitto_pass'];
 		$topicbase=$config['topicbase'];
 		
 		rename($folder . '/miele-config.php',$folder . '/miele-config.php.org');
@@ -169,6 +184,8 @@ function createconfig($refresh=false) {
 		$config = $config . "	'code'=> '" . $code . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_command'=> '" . $mosquitto_command . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_host'=> '" . $mosquitto_host . "'," . PHP_EOL;
+		$config = $config . "	'mosquitto_user'=> '" . $mosquitto_user . "'," . PHP_EOL;
+		$config = $config . "	'mosquitto_pass'=> '" . $mosquitto_pass . "'," . PHP_EOL;
 		$config = $config . "	'topicbase'=> '" . $topicbase . "'" . PHP_EOL;
 		$config = $config . ");" . PHP_EOL . "?>" . PHP_EOL . PHP_EOL;
 
@@ -215,6 +232,8 @@ if (strlen($config['access_token']) >> 0 ) {
 	$topicbase=$config['topicbase'];
 	$mosquitto_command= $config['mosquitto_command'];
 	$mosquitto_host= $config['mosquitto_host'];
+	$mosquitto_user= $config['mosquitto_user'];
+	$mosquitto_pass= $config['mosquitto_pass'];
 	$method='GET';
 	$data=getRESTData($url,'',$method,'',$authorization);
 	if (array_search("Unauthorized",$data) != "" ) {
@@ -278,19 +297,28 @@ if ($dump == false) {
 				}
 				$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
 				$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
+				$light_on=$appliance['state']['light'];
+				$dryingstep=$appliance['state']['dryingStep']['value_localized'];
+				$ventilationstep=$appliance['state']['ventilationStep']['value_localized'];
 				$topicbase = $topicbase . $appliance_id . '/';
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", "'".$appliance_type."'" );
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", "'".$programStatus."'");
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", "'".$programType."'");
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", "'".$programPhase."'");
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeLeft", $timeleft);
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeRunning", $timerunning);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", "'".$appliance_type."'",$mosquitto_user,$mosquitto_pass );
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", "'".$programStatus."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", "'".$programType."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", "'".$programPhase."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeLeft", $timeleft,$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeRunning", $timerunning,$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "LightON", "'" . $light_on . "'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "DryingStep", "'" . $dryingstep . "'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "VentilationStep", "'" . $ventilationstep . "'",$mosquitto_user,$mosquitto_pass);
 				echo "Appliance type: " . $appliance_type . PHP_EOL;
 				echo "Program status: " . $programStatus . PHP_EOL;
 				echo "Program type: " . $programType . PHP_EOL;
 				echo "Program phase: " . $programPhase . PHP_EOL;
 				echo "Time left: " . $timeleft . PHP_EOL;
-				echo "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+				echo "Time elapsed: " . $timerunning . PHP_EOL;
+				echo "Light On: " . $light_on . PHP_EOL;
+				echo "DryingStep: " . $dryingstep . PHP_EOL;
+				echo "Ventilationstep: " . $ventilationstep . PHP_EOL . PHP_EOL;
 				break;
 			case "Washing Machine":
 				$programStatus=$appliance['state']['status']['value_localized'];
@@ -368,12 +396,12 @@ if ($dump == false) {
 				$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
 				$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
 				$topicbase = $topicbase . $appliance_id . '/';
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", "'".$appliance_type."'" );
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", "'".$programStatus."'");
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", "'".$programType."'");
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", "'".$programPhase."'");
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeLeft", $timeleft);
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeRunning", $timerunning);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", "'".$appliance_type."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", "'".$programStatus."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", "'".$programType."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", "'".$programPhase."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeLeft", $timeleft,$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeRunning", $timerunning,$mosquitto_user,$mosquitto_pass);
 				echo "Appliance type: " . $appliance_type . PHP_EOL;
 				echo "Program status: " . $programStatus . PHP_EOL;
 				echo "Program type: " . $programType . PHP_EOL;
@@ -463,12 +491,12 @@ if ($dump == false) {
 				$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
 				$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
 				$topicbase = $topicbase . $appliance_id . '/';
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", "'".$appliance_type."'" );
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", "'".$programStatus."'");
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", "'".$programType."'");
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", "'".$programPhase."'");
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeLeft", $timeleft);
-				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeRunning", $timerunning);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ApplianceType", "'".$appliance_type."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramStatus", "'".$programStatus."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramType", "'".$programType."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "ProgramPhase", "'".$programPhase."'",$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeLeft", $timeleft,$mosquitto_user,$mosquitto_pass);
+				publish($mosquitto_command,$mosquitto_host,$topicbase . "TimeRunning", $timerunning,$mosquitto_user,$mosquitto_pass);
 				echo "Appliance type: " . $appliance_type . PHP_EOL;
 				echo "Program status: " . $programStatus . PHP_EOL;
 				echo "Program type: " . $programType . PHP_EOL;
@@ -484,4 +512,3 @@ if ($dump == false) {
 }
 
 ?>
-
