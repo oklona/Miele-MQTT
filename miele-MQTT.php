@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 0.13
+######		Version 0.14
 ######
 ################################################################################################################################################
 
@@ -129,7 +129,7 @@ function createconfig($refresh=false) {
 			$topicbase = $topicbase . "/";
 		}
 		$authorization='';
-		$url="https://api.mcs3.miele.com/thirdparty/auth";
+		$url="https://api.mcs3.miele.com/oauth/auth";
 		$postdata='email=' . urlencode($userid) . '&password=' . urlencode($password) . '&redirect_uri=%2Fv1%2Fdevices&state=login&response_type=code&client_id=' . $client_id . '&vgInformationSelector=' . $country;
 	
 		$method="POST";
