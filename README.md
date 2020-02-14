@@ -15,6 +15,16 @@ Additional info you will be asked for on the first run (make sure to have this i
 
 The script will NOT save your username and password, but it will obtain an autorization code, which will be saved in miele-config.php along with the rest of the data. If you are worried that someone wants to play with your household appliances, make sure to keep this file safe.
 
+
+To send commands to your appliance, publish mqtt in the form of:
+Topic: <Topic>/command/<deviceID>/<action> 
+Data: <data>
+
+Example:
+Topic: /miele/command/0010101010/powerOn
+Data: true
+
+
 The script does NOT work on my Windows 10 installation currently, I hope to be able to do something about that soon.
 
 The code written currently covers Miele dishwashers, washing machines and dryers (thanks, Stoffi!). Run the script with parameter "-d" to retrieve all data about your appliances, send it to me, and I can add more appliance-support to the script. -Or you could add to the script through Github (I believe, this is my very first Github project.)
