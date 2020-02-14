@@ -16,12 +16,12 @@ Additional info you will be asked for on the first run (make sure to have this i
 The script will NOT save your username and password, but it will obtain an autorization code, which will be saved in miele-config.php along with the rest of the data. If you are worried that someone wants to play with your household appliances, make sure to keep this file safe.
 
 
-To send commands to your appliance, publish mqtt in the form of:
-Topic: <Topic>/command/<deviceID>/<action> 
-Data: <data>
+To send commands to your appliance, publish mqtt in the form of: <br>
+Topic: \<Topic\>/command/\<deviceID\>/\<action\> <br>
+Data: \<data\>
 
-Example:
-Topic: /miele/command/0010101010/powerOn
+Example: <br>
+Topic: /miele/command/0010101010/powerOn <br>
 Data: true
 
 
