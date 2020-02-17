@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 2.b01
+######		Version 2.a02
 ######
 ################################################################################################################################################
 
@@ -107,34 +107,56 @@ function createconfig($refresh=false) {
 	global $mosquitto_pass;
 	global $topicbase;
 	global $access_token;
+	global $create;
 	
 	$content="application/x-www-form-urlencoded";
 
 	if($refresh == false) {
-		
-		$userid=readline("Username (email) to connect with: ");
+		$configdefault=array(
+			'access_token'=> '',
+			'refresh_token'=> '',
+			'client_id'=> '',
+			'client_secret'=> '',
+			'country'=> '',
+			'code'=> '',
+			'email'=> '',
+			'mosquitto_host'=> 'localhost',
+			'mosquitto_user'=> '',
+			'mosquitto_pass'=> '',
+			'topicbase'=> '/miele/'
+		);
+		$config=array_replace($configdefault,include($folder . '/miele-config2.php'));
+		$userid=readline("Username (email) to connect with [" . $config['email'] . "]:");
+		if($userid == "") {$userid=$config["email"];}
 		$password=prompt_silent("Please type your password: ");
-		$country=readline('Please state country in the form of "no-NO, en-EN, etc.": ');
+		$country=readline('Please state country in the form of "no-NO, en-EN, etc."[' . $config["country"] . ']: ');
+		if($country == "") {$country=$config["country"];}
 
-		$client_id=readline('Please input the client ID assigned to you by Miele API administrators: ');
-		$client_secret=readline('Please input the Client Secret assigned to you by Miele: ');
-	
-		$mosquitto_host=readline("Type the name of your mosquitto host (leave blank if localhost): ");
-		$mosquitto_user=readline("Type login-name for Mosquitto (leave blank if nor using login): ");
+		$client_id=readline('Please input the client ID assigned to you by Miele API administrators [' . $config["client_id"] . ']: ');
+		if($client_id == "") {$client_id=$config["client_id"];}
+		$client_secret=readline('Please input the Client Secret assigned to you by Miele [' . $config["client_secret"] . ']: ');
+		if($client_secret == "") {$client_secret=$config["client_secret"];}
+
+		$mosquitto_host=readline("Type the name of your mosquitto host [" . $config["mosquitto_host"] . "]: ");
+		if($mosquitto_host == "") {$mosquitto_host=$config["mosquitto_host"];}
+		$mosquitto_user=readline("Type login-name for Mosquitto [" . $config["mosquitto_user"] . "]: ");
+		if($mosquitto_user == "") {$mosquitto_user=$config["mosquitto_user"];}
 		if (strlen($mosquitto_user) >> 0 ) {
-			$mosquitto_pass=readline("Type the password for your mosquitto user (will be saved in PLAIN text): ");
+			$mosquitto_pass=readline("Type the password for your mosquitto user (will be saved in PLAIN text) [" . $config["mosquitto_pass"] . "]: ");
+			if($mosquitto_pass == "") {$mosquitto_pass=$config["mosquitto_pass"];}
 		}
 		else {
 			$mosquitto_pass="";
 		}
-		$topicbase=readline('Type the base topic name to use for Mosquitto (default: "/miele/": ');
+		$topicbase=readline('Type the base topic name to use for Mosquitto [' . $config["topicbase"] . ']: ');
+		if($topicbase == "") {$topicbase=$config["topicbase"];}
 		if (strlen($topicbase) == 0) {
 			$topicbase="/miele/";
 		}
 		if (substr($topicbase,-1) <> "/") {
 			$topicbase = $topicbase . "/";
 		}
-
+	
 		$authorization='';
 		$url="https://api.mcs3.miele.com/oauth/auth";
 		$postdata='email=' . urlencode($userid) . '&password=' . urlencode($password) . '&redirect_uri=www.google.com&state=login&response_type=code&client_id=' . $client_id . '&vgInformationSelector=' . $country;
@@ -186,9 +208,11 @@ function createconfig($refresh=false) {
 
 	if($tokenscreated == true ) {
 		$config="<?php" . PHP_EOL . "return array(" . PHP_EOL . "        'access_token'=> '" . $access_token . "'," . PHP_EOL . "        'refresh_token'=> '" . $refresh_token . "'," . PHP_EOL;
+		$config = $config . "	'email'=> '" . $userid . "'," . PHP_EOL;
 		$config = $config . "	'client_id'=> '" . $client_id . "'," . PHP_EOL;
 		$config = $config . "	'client_secret'=> '" . $client_secret . "'," . PHP_EOL;
 		$config = $config . "	'code'=> '" . $code . "'," . PHP_EOL;
+		$config = $config . "	'country'=> '" . $country . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_host'=> '" . $mosquitto_host . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_user'=> '" . $mosquitto_user . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_pass'=> '" . $mosquitto_pass . "'," . PHP_EOL;
@@ -213,19 +237,18 @@ require("phpMQTT.php");
 
 $folder=dirname($_SERVER['PHP_SELF']);
 
-if(count($argv) >> 1 ) {
-	if ($argv[1] == '-d') {
-		$dump=true;
-	}
-	else {
-		$dump=false;
-	}
-}
-else {
-	$dump=false;
-}
+$shoptopts="dsjc";
+$longopts=array("debug","single","json","create");
+$options=getopt($shoptopts,$longopts);
 
-if (file_exists($folder . '/miele-config2.php') == false ) {
+# Map options to variables, to simplify further script processing...
+$dump=(array_key_exists("d",$options) || array_key_exists("debug",$options));
+$single=(array_key_exists("s",$options) || array_key_exists("single",$options));
+$json=(array_key_exists("j",$options) || array_key_exists("json",$options));
+$create=(array_key_exists("c",$options) || array_key_exists("create",$options));
+
+
+if ((file_exists($folder . '/miele-config2.php') == false ) || $create) {
 	$configcreated=createconfig();
 	if($configcreated == false) {
 		exit("Failed to create config! Did you type the correct credentials?" . PHP_EOL);
@@ -251,13 +274,18 @@ if(!$mqtt->connect(true, NULL, $mosquitto_user, $mosquitto_pass)) {
 	exit(1);
 }
 
+if($single) {
+	retrieveandpublish($folder,$mqtt);
+	exit(0);
+}
+
 $topics[$topicbase . 'command/#'] = array("qos" => 0, "function" => "procmsg");
 $mqtt->subscribe($topics, 0);
 
 $count=30;
 while($mqtt->proc()){
 	if ( $count==30) {
-		retrieveandpublish($folder,$dump,$mqtt);
+		retrieveandpublish($folder,$mqtt);
 		$count=0;
 	}
 	sleep(1);
@@ -293,12 +321,13 @@ exit(0);
 
 
 // Retrieveing information
-function retrieveandpublish($folder,$dump,$mqtt) {
+function retrieveandpublish($folder,$mqtt) {
 	global $mosquitto_host;
 	global $mosquitto_user;
 	global $mosquitto_pass;
 	global $access_token;
 	global $topicbase;
+	global $dump;
 
 	$authorization='';
 
