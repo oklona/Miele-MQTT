@@ -13,7 +13,7 @@ Additional info you will be asked for on the first run (make sure to have this i
 - Country code for your Miele@home account
 - Base topic to use when publishing Mosquitto data
 
-The script will NOT save your username and password, but it will obtain an autorization code, which will be saved in miele-config.php along with the rest of the data. If you are worried that someone wants to play with your household appliances, make sure to keep this file safe.
+The script will NOT save your Miele Home password, but it will obtain an autorization code, which will be saved in miele-config.php along with the rest of the data. If you are worried that someone wants to play with your household appliances, make sure to keep this file safe.
 
 
 To send commands to your appliance, publish mqtt in the form of: <br>
@@ -24,8 +24,14 @@ Example: <br>
 Topic: /miele/command/0010101010/powerOn <br>
 Data: true
 
+The script has been tested using PHP 7.x on Linux.
 
-The script does NOT work on my Windows 10 installation currently, I hope to be able to do something about that soon.
+The code written currently covers Miele dishwashers, washing machines and dryers (thanks, Stoffi!). Run the script with parameter "-d" to retrieve all data about your appliances, send it to me, and I can add more appliance-support to the script. -Or you could add to the script through Github, and create a Pull Request (PR).
 
-The code written currently covers Miele dishwashers, washing machines and dryers (thanks, Stoffi!). Run the script with parameter "-d" to retrieve all data about your appliances, send it to me, and I can add more appliance-support to the script. -Or you could add to the script through Github (I believe, this is my very first Github project.)
-
+<b>Command line switches</b>
+The script now support the following command line swithces:
+"-s" or "--single": Just query data once, and quit. Using this, sending commands to the appliance will not work.
+"-c" or "--create": Create new config file. If you already have an existing config file, default values for everything except passwords will be retreived from the existing config file, sp you will only have to type your password. Using this switch, no data is retreived from Miele@home.
+"-j" or "--json": Query data once, and output the data as JSON, in the same format that Miele use.
+"-D" or "--debug": Output all debug information while the script is running. 
+"-d" or "--dump": Dumps the data retreieved from Miele@home in case you have an unsupported appliance, so you can send it to me through "Issues" on Github, and we can add support for additional appliances.
