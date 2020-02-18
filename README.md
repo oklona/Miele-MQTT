@@ -35,3 +35,13 @@ The script now support the following command line swithces:<br>
 "-j" or "--json": Query data once, and output the data as JSON, in the same format that Miele use.<br>
 "-D" or "--debug": Output all debug information while the script is running. <br>
 "-d" or "--dump": Dumps the data retreieved from Miele@home in case you have an unsupported appliance, so you can send it to me through "Issues" on Github, and we can add support for additional appliances.<br>
+
+
+<b>Installation instructions</b><br>
+This script has been developed using Ubuntu 18.04, and I have only tested it using this distribution. However, installation should be similar for all Debian-based distributions. For RedHat, I recommend Googling "how to install PHP" for your release. It should be easy, using yum.
+
+In Ubuntu, install PHP and the required PHP librarys with the following command:<br>
+ apt-get update && apt-get install -y php-cli php-common php-curl php-json php-readline <br>
+
+Copy this script and phpMQTT.php into a folder where you have write permissions (for the config file). Gather your credentials, security tokens and MQTT information, and run "php ./miele-MQTT.php -c". The config-file has now been created, and you can run the script with whatever parameters you need from here.
+
