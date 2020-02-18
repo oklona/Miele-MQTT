@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 2.b01
+######		Version 2.b02
 ######
 ################################################################################################################################################
 
@@ -25,10 +25,14 @@ $config='';
 
 function getRESTData($url,$postdata,$method,$content,$authorization='')
 {
-	#print $authorization . PHP_EOL;
-	#print $postdata . PHP_EOL;
-	#print $method . PHP_EOL;
-	#print $url . PHP_EOL;
+	global $debug;
+	global $json;
+	if($debug){
+		print $authorization . PHP_EOL;
+		print $postdata . PHP_EOL;
+		print $method . PHP_EOL;
+		print $url . PHP_EOL;
+	}
 	$ch = curl_init($url);                                                                      
 	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);                                                                     
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -47,7 +51,7 @@ function getRESTData($url,$postdata,$method,$content,$authorization='')
 		curl_setopt($ch,CURLOPT_POSTFIELDS, $postdata);
 	}
 	$result = curl_exec($ch);
-	#print $result . PHP_EOL;
+
 	if (curl_getinfo($ch,CURLINFO_RESPONSE_CODE) == 302 ) {
 		$returndata=curl_getinfo($ch,CURLINFO_REDIRECT_URL);
 	}
@@ -107,34 +111,62 @@ function createconfig($refresh=false) {
 	global $mosquitto_pass;
 	global $topicbase;
 	global $access_token;
+	global $create;
+	global $debug;
 	
 	$content="application/x-www-form-urlencoded";
 
 	if($refresh == false) {
-		
-		$userid=readline("Username (email) to connect with: ");
+		$configdefault=array(
+			'access_token'=> '',
+			'refresh_token'=> '',
+			'client_id'=> '',
+			'client_secret'=> '',
+			'country'=> '',
+			'code'=> '',
+			'email'=> '',
+			'mosquitto_host'=> 'localhost',
+			'mosquitto_user'=> '',
+			'mosquitto_pass'=> '',
+			'topicbase'=> '/miele/'
+		);
+		if(file_exists($folder . '/miele-config2.php')){
+			$config=array_replace($configdefault,include($folder . '/miele-config2.php'));
+		}
+		else {
+			$config=$configdefault;
+		}
+		$userid=readline("Username (email) to connect with [" . $config['email'] . "]:");
+		if($userid == "") {$userid=$config["email"];}
 		$password=prompt_silent("Please type your password: ");
-		$country=readline('Please state country in the form of "no-NO, en-EN, etc.": ');
+		$country=readline('Please state country in the form of "no-NO, en-EN, etc."[' . $config["country"] . ']: ');
+		if($country == "") {$country=$config["country"];}
 
-		$client_id=readline('Please input the client ID assigned to you by Miele API administrators: ');
-		$client_secret=readline('Please input the Client Secret assigned to you by Miele: ');
-	
-		$mosquitto_host=readline("Type the name of your mosquitto host (leave blank if localhost): ");
-		$mosquitto_user=readline("Type login-name for Mosquitto (leave blank if nor using login): ");
+		$client_id=readline('Please input the client ID assigned to you by Miele API administrators [' . $config["client_id"] . ']: ');
+		if($client_id == "") {$client_id=$config["client_id"];}
+		$client_secret=readline('Please input the Client Secret assigned to you by Miele [' . $config["client_secret"] . ']: ');
+		if($client_secret == "") {$client_secret=$config["client_secret"];}
+
+		$mosquitto_host=readline("Type the name of your mosquitto host [" . $config["mosquitto_host"] . "]: ");
+		if($mosquitto_host == "") {$mosquitto_host=$config["mosquitto_host"];}
+		$mosquitto_user=readline("Type login-name for Mosquitto [" . $config["mosquitto_user"] . "]: ");
+		if($mosquitto_user == "") {$mosquitto_user=$config["mosquitto_user"];}
 		if (strlen($mosquitto_user) >> 0 ) {
-			$mosquitto_pass=readline("Type the password for your mosquitto user (will be saved in PLAIN text): ");
+			$mosquitto_pass=readline("Type the password for your mosquitto user (will be saved in PLAIN text) [" . $config["mosquitto_pass"] . "]: ");
+			if($mosquitto_pass == "") {$mosquitto_pass=$config["mosquitto_pass"];}
 		}
 		else {
 			$mosquitto_pass="";
 		}
-		$topicbase=readline('Type the base topic name to use for Mosquitto (default: "/miele/": ');
+		$topicbase=readline('Type the base topic name to use for Mosquitto [' . $config["topicbase"] . ']: ');
+		if($topicbase == "") {$topicbase=$config["topicbase"];}
 		if (strlen($topicbase) == 0) {
 			$topicbase="/miele/";
 		}
 		if (substr($topicbase,-1) <> "/") {
 			$topicbase = $topicbase . "/";
 		}
-
+	
 		$authorization='';
 		$url="https://api.mcs3.miele.com/oauth/auth";
 		$postdata='email=' . urlencode($userid) . '&password=' . urlencode($password) . '&redirect_uri=www.google.com&state=login&response_type=code&client_id=' . $client_id . '&vgInformationSelector=' . $country;
@@ -144,6 +176,7 @@ function createconfig($refresh=false) {
 		$data=getRESTData($url,$postdata,$method,$content,'');
 	
 		if (is_array($data) == FALSE){
+			if($debug){print "Oauth authentication did not return array..." . PHP_EOL;}
 			$params=(explode('?',$data))[1];
 			foreach (explode('&', $params) as $part) {
 				$param=explode("=",$part);
@@ -181,14 +214,17 @@ function createconfig($refresh=false) {
 		$access_token = $data["access_token"];
 		$refresh_token = $data["refresh_token"];
 		$tokenscreated = true;
-		print "Access token: " . $access_token . PHP_EOL;
+		if($debug){print "Access token: " . $access_token . PHP_EOL;}
 	}
 
 	if($tokenscreated == true ) {
+		if($debug){print "Tokens created successfully..." . PHP_EOL;}
 		$config="<?php" . PHP_EOL . "return array(" . PHP_EOL . "        'access_token'=> '" . $access_token . "'," . PHP_EOL . "        'refresh_token'=> '" . $refresh_token . "'," . PHP_EOL;
+		$config = $config . "	'email'=> '" . $userid . "'," . PHP_EOL;
 		$config = $config . "	'client_id'=> '" . $client_id . "'," . PHP_EOL;
 		$config = $config . "	'client_secret'=> '" . $client_secret . "'," . PHP_EOL;
 		$config = $config . "	'code'=> '" . $code . "'," . PHP_EOL;
+		$config = $config . "	'country'=> '" . $country . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_host'=> '" . $mosquitto_host . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_user'=> '" . $mosquitto_user . "'," . PHP_EOL;
 		$config = $config . "	'mosquitto_pass'=> '" . $mosquitto_pass . "'," . PHP_EOL;
@@ -196,7 +232,7 @@ function createconfig($refresh=false) {
 		$config = $config . ");" . PHP_EOL . "?>" . PHP_EOL . PHP_EOL;
 
 		if (file_put_contents($folder . "/miele-config2.php", $config) <> false ) {
-			echo "Configuration file created!" . PHP_EOL;
+			if($debug){print "Configuration file created!" . PHP_EOL;}
 			$configcreated=true;
 		}
 	}
@@ -213,19 +249,19 @@ require("phpMQTT.php");
 
 $folder=dirname($_SERVER['PHP_SELF']);
 
-if(count($argv) >> 1 ) {
-	if ($argv[1] == '-d') {
-		$dump=true;
-	}
-	else {
-		$dump=false;
-	}
-}
-else {
-	$dump=false;
-}
+$shoptopts="dDsjc";
+$longopts=array("dump","debug","single","json","create");
+$options=getopt($shoptopts,$longopts);
 
-if (file_exists($folder . '/miele-config2.php') == false ) {
+# Map options to variables, to simplify further script processing...
+$debug=(array_key_exists("D",$options) || array_key_exists("debug",$options));
+$dump=(array_key_exists("d",$options) || array_key_exists("dump",$options));
+$single=(array_key_exists("s",$options) || array_key_exists("single",$options));
+$json=(array_key_exists("j",$options) || array_key_exists("json",$options));
+$create=(array_key_exists("c",$options) || array_key_exists("create",$options));
+if($json||$dump){$single=true;}
+
+if ((file_exists($folder . '/miele-config2.php') == false ) || $create) {
 	$configcreated=createconfig();
 	if($configcreated == false) {
 		exit("Failed to create config! Did you type the correct credentials?" . PHP_EOL);
@@ -251,13 +287,23 @@ if(!$mqtt->connect(true, NULL, $mosquitto_user, $mosquitto_pass)) {
 	exit(1);
 }
 
+if($create) {
+	# Option create should exit after creating new config
+	exit(0);
+}
+
+if($single) {
+	retrieveandpublish($folder,$mqtt);
+	exit(0);
+}
+
 $topics[$topicbase . 'command/#'] = array("qos" => 0, "function" => "procmsg");
 $mqtt->subscribe($topics, 0);
 
 $count=30;
 while($mqtt->proc()){
 	if ( $count==30) {
-		retrieveandpublish($folder,$dump,$mqtt);
+		retrieveandpublish($folder,$mqtt);
 		$count=0;
 	}
 	sleep(1);
@@ -277,28 +323,30 @@ function procmsg($topic, $msg){
 			$i=10;
 		}
 	}
-	//echo "Sending command: " . $action . " to device: " . $appliance . PHP_EOL;
-	//echo $msg . PHP_EOL;
+	if($dump){echo "Sending command: " . $action . " to device: " . $appliance . PHP_EOL;}
+	if($dump){echo $msg . PHP_EOL;}
 	$url='https://api.mcs3.miele.com/v1/devices/' . $appliance . "/actions";
 	$authorization='Bearer ' . $access_token;
 	$method='PUT';
 	$postdata = array($action=>$msg);
 	$data_json = json_encode($postdata);
-	//$postdata="{'" . $action . "'," . $msg . '}';
 	$data=getRESTData($url,$data_json,$method,'application/json',$authorization);
-	//var_dump($data);
+	if($dump){var_dump($data);}
 }
 
 exit(0);
 
 
 // Retrieveing information
-function retrieveandpublish($folder,$dump,$mqtt) {
+function retrieveandpublish($folder,$mqtt) {
 	global $mosquitto_host;
 	global $mosquitto_user;
 	global $mosquitto_pass;
 	global $access_token;
 	global $topicbase;
+	global $dump;
+	global $json;
+	global $debug;
 
 	$authorization='';
 
@@ -314,13 +362,16 @@ function retrieveandpublish($folder,$dump,$mqtt) {
 			$method='GET';
 			$data=getRESTData($url,'',$method,'',$authorization);
 		}
-		if ($dump == true ) {
-			//var_dump($data);
+		if ($dump) {
+			var_dump($data);
+		}
+		if ($json) {
+			print(json_encode($data) . PHP_EOL);
 		}
 	}
 
 
-	if ($dump == false) {
+	if (($dump == false) & ($json == false)) {
 		foreach ($data as $appliance) {
 			$appliance_id=$appliance['ident']['deviceIdentLabel']['fabNumber'];
 			$appliance_type=$appliance['ident']['type']['value_localized'];
@@ -381,15 +432,17 @@ function retrieveandpublish($folder,$dump,$mqtt) {
 					$mqtt->publish($topicbase . "DryingStep", "'" . $dryingstep . "'");
 					$mqtt->publish($topicbase . "VentilationStep", "'" . $ventilationstep . "'");
 
-					//echo "Appliance type: " . $appliance_type . PHP_EOL;
-					//echo "Program status: " . $programStatus . PHP_EOL;
-					//echo "Program type: " . $programType . PHP_EOL;
-					//echo "Program phase: " . $programPhase . PHP_EOL;
-					//echo "Time left: " . $timeleft . PHP_EOL;
-					//echo "Time elapsed: " . $timerunning . PHP_EOL;
-					//echo "Light On: " . $light_on . PHP_EOL;
-					//echo "DryingStep: " . $dryingstep . PHP_EOL;
-					//echo "Ventilationstep: " . $ventilationstep . PHP_EOL . PHP_EOL;
+					if($debug){
+						print "Appliance type: " . $appliance_type . PHP_EOL;
+						print "Program status: " . $programStatus . PHP_EOL;
+						print "Program type: " . $programType . PHP_EOL;
+						print "Program phase: " . $programPhase . PHP_EOL;
+						print "Time left: " . $timeleft . PHP_EOL;
+						print "Time elapsed: " . $timerunning . PHP_EOL;
+						print "Light On: " . $light_on . PHP_EOL;
+						print "DryingStep: " . $dryingstep . PHP_EOL;
+						print "Ventilationstep: " . $ventilationstep . PHP_EOL . PHP_EOL;
+					}
 					break;
 				case "Washing Machine":
 					$programStatus=$appliance['state']['status']['value_localized'];
@@ -473,12 +526,14 @@ function retrieveandpublish($folder,$dump,$mqtt) {
 					$mqtt->publish($topicbase . "ProgramPhase", "'".$programPhase."'");
 					$mqtt->publish($topicbase . "TimeLeft", $timeleft);
 					$mqtt->publish($topicbase . "TimeRunning", $timerunning);
-					//echo "Appliance type: " . $appliance_type . PHP_EOL;
-					//echo "Program status: " . $programStatus . PHP_EOL;
-					//echo "Program type: " . $programType . PHP_EOL;
-					//echo "Program phase: " . $programPhase . PHP_EOL;
-					//echo "Time left: " . $timeleft . PHP_EOL;
-					//echo "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+					if($debug){
+						print "Appliance type: " . $appliance_type . PHP_EOL;
+						print "Program status: " . $programStatus . PHP_EOL;
+						print "Program type: " . $programType . PHP_EOL;
+						print "Program phase: " . $programPhase . PHP_EOL;
+						print "Time left: " . $timeleft . PHP_EOL;
+						print "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+					}
 					break;
 				case "Clothes Dryer":
 					$programStatus=$appliance['state']['status']['value_localized'];
@@ -568,12 +623,14 @@ function retrieveandpublish($folder,$dump,$mqtt) {
 					$mqtt->publish($topicbase . "ProgramPhase", "'".$programPhase."'");
 					$mqtt->publish($topicbase . "TimeLeft", $timeleft);
 					$mqtt->publish($topicbase . "TimeRunning", $timerunning);
-					//echo "Appliance type: " . $appliance_type . PHP_EOL;
-					//echo "Program status: " . $programStatus . PHP_EOL;
-					//echo "Program type: " . $programType . PHP_EOL;
-					//echo "Program phase: " . $programPhase . PHP_EOL;
-					//echo "Time left: " . $timeleft . PHP_EOL;
-					//echo "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+					if($debug){
+						print "Appliance type: " . $appliance_type . PHP_EOL;
+						print "Program status: " . $programStatus . PHP_EOL;
+						print "Program type: " . $programType . PHP_EOL;
+						print "Program phase: " . $programPhase . PHP_EOL;
+						print "Time left: " . $timeleft . PHP_EOL;
+						print "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+					}
 					break;
 				default:
 					echo "Appliance type " . $appliance_type . " is not defined. Please define it, or send information to have it added." . PHP_EOL;

@@ -1,0 +1,10 @@
+v 2.0b2 - February 18th 2020
+- Added support for command line switches "-d/--dump, -c/--create, -D/--debug, -j/--json, -s/--single".
+- Added support for reading defaults from miele-config2.php when creating new config file
+
+v 2.0b1 - February 2020
+- Changed MQTT implementation to use Bluerhinos' phpMQTT library found at https://github.com/bluerhinos/phpMQTT
+- Added support for subscribing to commands through MQTT.
+
+v 0.14 - September 2018
+Initial version
