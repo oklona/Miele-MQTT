@@ -130,7 +130,12 @@ function createconfig($refresh=false) {
 			'mosquitto_pass'=> '',
 			'topicbase'=> '/miele/'
 		);
-		$config=array_replace($configdefault,include($folder . '/miele-config2.php'));
+		if(file_exists($folder . '/miele-config2.php')){
+			$config=array_replace($configdefault,include($folder . '/miele-config2.php'));
+		}
+		else {
+			$config=$configdefault;
+		}
 		$userid=readline("Username (email) to connect with [" . $config['email'] . "]:");
 		if($userid == "") {$userid=$config["email"];}
 		$password=prompt_silent("Please type your password: ");
