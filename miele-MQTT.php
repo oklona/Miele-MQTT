@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 2.b02
+######		Version 2.b01
 ######
 ################################################################################################################################################
 
@@ -369,6 +369,10 @@ function retrieveandpublish($folder,$mqtt) {
 			print(json_encode($data) . PHP_EOL);
 		}
 	}
+	else {
+		print "No access token, unable to continue!" . PHP_EOL;
+		exit(1);
+	}
 
 
 	if (($dump == false) & ($json == false)) {
@@ -421,16 +425,16 @@ function retrieveandpublish($folder,$mqtt) {
 					$light_on=$appliance['state']['light'];
 					$dryingstep=$appliance['state']['dryingStep']['value_localized'];
 					$ventilationstep=$appliance['state']['ventilationStep']['value_localized'];
-					$topicbase = $topicbase . $appliance_id . '/';
-					$mqtt->publish($topicbase . "ApplianceType", "'".$appliance_type."'");
-					$mqtt->publish($topicbase . "ProgramStatus", "'".$programStatus."'");
-					$mqtt->publish($topicbase . "ProgramType", "'".$programType."'");
-					$mqtt->publish($topicbase . "ProgramPhase", "'".$programPhase."'");
-					$mqtt->publish($topicbase . "TimeLeft", $timeleft);
-					$mqtt->publish($topicbase . "TimeRunning", $timerunning);
-					$mqtt->publish($topicbase . "LightON", "'" . $light_on . "'");
-					$mqtt->publish($topicbase . "DryingStep", "'" . $dryingstep . "'");
-					$mqtt->publish($topicbase . "VentilationStep", "'" . $ventilationstep . "'");
+					$topicapplbase = $topicbase . $appliance_id . '/';
+					$mqtt->publish($topicapplbase . "ApplianceType", "'".$appliance_type."'");
+					$mqtt->publish($topicapplbase . "ProgramStatus", "'".$programStatus."'");
+					$mqtt->publish($topicapplbase . "ProgramType", "'".$programType."'");
+					$mqtt->publish($topicapplbase . "ProgramPhase", "'".$programPhase."'");
+					$mqtt->publish($topicapplbase . "TimeLeft", $timeleft);
+					$mqtt->publish($topicapplbase . "TimeRunning", $timerunning);
+					$mqtt->publish($topicapplbase . "LightON", "'" . $light_on . "'");
+					$mqtt->publish($topicapplbase . "DryingStep", "'" . $dryingstep . "'");
+					$mqtt->publish($topicapplbase . "VentilationStep", "'" . $ventilationstep . "'");
 
 					if($debug){
 						print "Appliance type: " . $appliance_type . PHP_EOL;
@@ -519,13 +523,13 @@ function retrieveandpublish($folder,$mqtt) {
 					}
 					$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
 					$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
-					$topicbase = $topicbase . $appliance_id . '/';
-					$mqtt->publish($topicbase . "ApplianceType", "'".$appliance_type."'");
-					$mqtt->publish($topicbase . "ProgramStatus", "'".$programStatus."'");
-					$mqtt->publish($topicbase . "ProgramType", "'".$programType."'");
-					$mqtt->publish($topicbase . "ProgramPhase", "'".$programPhase."'");
-					$mqtt->publish($topicbase . "TimeLeft", $timeleft);
-					$mqtt->publish($topicbase . "TimeRunning", $timerunning);
+					$topicapplbase = $topicbase . $appliance_id . '/';
+					$mqtt->publish($topicapplbase . "ApplianceType", "'".$appliance_type."'");
+					$mqtt->publish($topicapplbase . "ProgramStatus", "'".$programStatus."'");
+					$mqtt->publish($topicapplbase . "ProgramType", "'".$programType."'");
+					$mqtt->publish($topicapplbase . "ProgramPhase", "'".$programPhase."'");
+					$mqtt->publish($topicapplbase . "TimeLeft", $timeleft);
+					$mqtt->publish($topicapplbase . "TimeRunning", $timerunning);
 					if($debug){
 						print "Appliance type: " . $appliance_type . PHP_EOL;
 						print "Program status: " . $programStatus . PHP_EOL;
@@ -616,13 +620,13 @@ function retrieveandpublish($folder,$mqtt) {
 					}
 					$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
 					$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
-					$topicbase = $topicbase . $appliance_id . '/';
-					$mqtt->publish($topicbase . "ApplianceType", "'".$appliance_type."'");
-					$mqtt->publish($topicbase . "ProgramStatus", "'".$programStatus."'");
-					$mqtt->publish($topicbase . "ProgramType", "'".$programType."'");
-					$mqtt->publish($topicbase . "ProgramPhase", "'".$programPhase."'");
-					$mqtt->publish($topicbase . "TimeLeft", $timeleft);
-					$mqtt->publish($topicbase . "TimeRunning", $timerunning);
+					$topicapplbase = $topicbase . $appliance_id . '/';
+					$mqtt->publish($topicapplbase . "ApplianceType", "'".$appliance_type."'");
+					$mqtt->publish($topicapplbase . "ProgramStatus", "'".$programStatus."'");
+					$mqtt->publish($topicapplbase . "ProgramType", "'".$programType."'");
+					$mqtt->publish($topicapplbase . "ProgramPhase", "'".$programPhase."'");
+					$mqtt->publish($topicapplbase . "TimeLeft", $timeleft);
+					$mqtt->publish($topicapplbase . "TimeRunning", $timerunning);
 					if($debug){
 						print "Appliance type: " . $appliance_type . PHP_EOL;
 						print "Program status: " . $programStatus . PHP_EOL;
