@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 2.b01
+######		Version 2.b03
 ######
 ################################################################################################################################################
 
