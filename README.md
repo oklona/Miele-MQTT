@@ -1,7 +1,16 @@
 # Miele-MQTT
 A very simple script to read data and issue commands via Miele@home cloud services, using Mosquitto MQTT
 
+<b>Before first time use</b>
 The first time you run it, you will be asked for Client ID and Client Key. These keys are managed by Miele developers, so you need to send an email to developer@miele.com to retrieve these. According to the license agreement with Miele, these should not be distributed.
+
+Before using the script, you need to confirm for Miele that you want to allow the script to read and access your data. This cannot be done through the script, so you need to follow this procedure:
+
+- Go to https://www.miele.com/developer/swagger-ui/swagger.html
+- Click Authorize
+- Use the second form with your client ID and secret
+- On the same site trigger an API call (i.e. "devices"), and authorize the client ID/app to use the API. Use UserName/Password if you're asked for it.
+
 
 The script has been designed to be left running in the background, polling data from Miele every 30 seconds.
 
@@ -17,7 +26,7 @@ Additional info you will be asked for on the first run (make sure to have this i
 
 The script will NOT save your Miele Home password, but it will obtain an autorization code, which will be saved in miele-config.php along with the rest of the data. If you are worried that someone wants to play with your household appliances, make sure to keep this file safe.
 
-
+<b>Send commands </b>
 To send commands to your appliance, publish mqtt in the form of: <br>
 Topic: \<Topic\>/command/\<deviceID\>/\<action\> <br>
 Data: \<data\>
