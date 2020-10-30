@@ -539,94 +539,38 @@ function retrieveandpublish($folder,$mqtt) {
 						print "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
 					}
 					break;
-				case "Clothes Dryer":
+				case "Steam Oven":
 					$programStatus=$appliance['state']['status']['value_localized'];
 					$programType= $appliance['state']['programType']['value_raw'];
-					$programPhaseRaw=$appliance['state']['programPhase']['value_raw'];
-					switch ($programPhaseRaw) {
-						case "512":
-							// Purpose unknown, observed when programmed (without phase) and off.
-							$programPhase="Not running";
-							break;
-						case "513":
-							$programPhase="Program Running";
-							break;
-						case "514":
-							$programPhase="Drying";
-							break;
-						case "515":
-							$programPhase="Machine Iron";
-							break;
-						case "516":
-							$programPhase="Hand Iron";
-							break;
-						case "517":
-							$programPhase="Normal";
-							break;
-						case "518":
-							$programPhase="Normal Plus";
-							break;
-						case "519":
-							$programPhase="Cooling down";
-							break;
-						case "520":
-							$programPhase="Hand Iron";
-							break;
-						case "521":
-							$programPhase="Anti-crease";
-							break;
-						case "522":
-							$programPhase="Finished";
-							break;
-						case "523":
-							$programPhase="Extra Dry";
-							break;
-						case "524":
-							$programPhase="Hand Iron";
-							break;
-						case "526":
-							$programPhase="Moisten";
-							break;
-						case "528":
-							$programPhase="Timed Drying";
-							break;
-						case "529":
-							$programPhase="Warm Air";
-							break;
-						case "530":
-							$programPhase="Steam Smoothing";
-							break;
-						case "531":
-							$programPhase="Comfort Cooling";
-							break;
-						case "532":
-							$programPhase="Rinse out lint";
-							break;
-						case "533":
-							$programPhase="Rinses";
-							break;
-						case "534":
-							$programPhase="Smoothing";
-							break;
-						case "538":
-							$programPhase="Slightly Dry";
-							break;						
-						case "539":
-							$programPhase="Safety Cooling";
-							break;
-						default:
-							$programPhase="Unknown: " . $programPhaseRaw;
-						break;
-					}
+					$programPhase=$appliance['state']['programPhase']['value_localized'];
 					$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
 					$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
+					$targetTemperature1 = $appliance['state']['targetTemperature'][0]['value_localized'];
+					$targetTemperature2 = $appliance['state']['targetTemperature'][1]['value_localized'];
+					$targetTemperature3 = $appliance['state']['targetTemperature'][2]['value_localized'];
+					$currentTemperature1 = $appliance['state']['Temperature'][0]['value_localized'];
+					$currentTemperature2 = $appliance['state']['Temperature'][1]['value_localized'];
+					$currentTemperature3 = $appliance['state']['Temperature'][2]['value_localized'];
+					$signalInfo = $appliance['state']['signalInfo'];
+					$signalFailure = $appliance['state']['signalFailure'];
+					$signalDoor = $appliance['state']['signalDoor'];
 					$topicapplbase = $topicbase . $appliance_id . '/';
+					
 					$mqtt->publish($topicapplbase . "ApplianceType", "'".$appliance_type."'");
 					$mqtt->publish($topicapplbase . "ProgramStatus", "'".$programStatus."'");
 					$mqtt->publish($topicapplbase . "ProgramType", "'".$programType."'");
 					$mqtt->publish($topicapplbase . "ProgramPhase", "'".$programPhase."'");
 					$mqtt->publish($topicapplbase . "TimeLeft", $timeleft);
 					$mqtt->publish($topicapplbase . "TimeRunning", $timerunning);
+					$mqtt->publish($topicapplbase . "TargetTemperature1", $targetTemperature1);
+					$mqtt->publish($topicapplbase . "TargetTemperature2", $targetTemperature2);
+					$mqtt->publish($topicapplbase . "TargetTemperature3", $targetTemperature3);
+					$mqtt->publish($topicapplbase . "CurrentTemperature1", $currentTemperature1);
+					$mqtt->publish($topicapplbase . "CurrentTemperature2", $currentTemperature2);
+					$mqtt->publish($topicapplbase . "CurrentTemperature3", $currentTemperature3);
+					$mqtt->publish($topicapplbase . "InfoAvailable", $signalInfo);
+					$mqtt->publish($topicapplbase . "FailureSignal", $signalFailure);
+					$mqtt->publish($topicapplbase . "DoorSignal", $signalDoor);
 					if($debug){
 						print "Appliance type: " . $appliance_type . PHP_EOL;
 						print "Program status: " . $programStatus . PHP_EOL;
@@ -634,9 +578,209 @@ function retrieveandpublish($folder,$mqtt) {
 						print "Program phase: " . $programPhase . PHP_EOL;
 						print "Time left: " . $timeleft . PHP_EOL;
 						print "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+						print "Target Temperature 1: " . $targetTemperature1 . PHP_EOL;
+						print "Target Temperature 2: " . $targetTemperature2 . PHP_EOL;
+						print "Target Temperature 3: " . $targetTemperature3 . PHP_EOL;
+						print "Current Temperature 1: " . $currentTemperature1 . PHP_EOL;
+						print "Current Temperature 2: " . $currentTemperature2 . PHP_EOL;
+						print "Current Temperature 3: " . $currentTemperature3 . PHP_EOL;
+						print "Info available: " . $signalInfo . PHP_EOL;
+						print "Failure: " . $signalFailure . PHP_EOL;
+						print "Door open: " . $signalDoor . PHP_EOL;
 					}
 					break;
-				default:
+					case "Oven":
+						$programStatus=$appliance['state']['status']['value_localized'];
+						$programType= $appliance['state']['programType']['value_raw'];
+						$programPhase=$appliance['state']['programPhase']['value_localized'];
+						$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
+						$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
+						$targetTemperature1 = $appliance['state']['targetTemperature'][0]['value_localized'];
+						$targetTemperature2 = $appliance['state']['targetTemperature'][1]['value_localized'];
+						$targetTemperature3 = $appliance['state']['targetTemperature'][2]['value_localized'];
+						$currentTemperature1 = $appliance['state']['Temperature'][0]['value_localized'];
+						$currentTemperature2 = $appliance['state']['Temperature'][1]['value_localized'];
+						$currentTemperature3 = $appliance['state']['Temperature'][2]['value_localized'];
+						$signalInfo = $appliance['state']['signalInfo'];
+						$signalFailure = $appliance['state']['signalFailure'];
+						$signalDoor = $appliance['state']['signalDoor'];
+						$topicapplbase = $topicbase . $appliance_id . '/';
+						
+						$mqtt->publish($topicapplbase . "ApplianceType", "'".$appliance_type."'");
+						$mqtt->publish($topicapplbase . "ProgramStatus", "'".$programStatus."'");
+						$mqtt->publish($topicapplbase . "ProgramType", "'".$programType."'");
+						$mqtt->publish($topicapplbase . "ProgramPhase", "'".$programPhase."'");
+						$mqtt->publish($topicapplbase . "TimeLeft", $timeleft);
+						$mqtt->publish($topicapplbase . "TimeRunning", $timerunning);
+						$mqtt->publish($topicapplbase . "TargetTemperature1", $targetTemperature1);
+						$mqtt->publish($topicapplbase . "TargetTemperature2", $targetTemperature2);
+						$mqtt->publish($topicapplbase . "TargetTemperature3", $targetTemperature3);
+						$mqtt->publish($topicapplbase . "CurrentTemperature1", $currentTemperature1);
+						$mqtt->publish($topicapplbase . "CurrentTemperature2", $currentTemperature2);
+						$mqtt->publish($topicapplbase . "CurrentTemperature3", $currentTemperature3);
+						$mqtt->publish($topicapplbase . "InfoAvailable", $signalInfo);
+						$mqtt->publish($topicapplbase . "FailureSignal", $signalFailure);
+						$mqtt->publish($topicapplbase . "DoorSignal", $signalDoor);
+						if($debug){
+							print "Appliance type: " . $appliance_type . PHP_EOL;
+							print "Program status: " . $programStatus . PHP_EOL;
+							print "Program type: " . $programType . PHP_EOL;
+							print "Program phase: " . $programPhase . PHP_EOL;
+							print "Time left: " . $timeleft . PHP_EOL;
+							print "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+							print "Target Temperature 1: " . $targetTemperature1 . PHP_EOL;
+							print "Target Temperature 2: " . $targetTemperature2 . PHP_EOL;
+							print "Target Temperature 3: " . $targetTemperature3 . PHP_EOL;
+							print "Current Temperature 1: " . $currentTemperature1 . PHP_EOL;
+							print "Current Temperature 2: " . $currentTemperature2 . PHP_EOL;
+							print "Current Temperature 3: " . $currentTemperature3 . PHP_EOL;
+							print "Info available: " . $signalInfo . PHP_EOL;
+							print "Failure: " . $signalFailure . PHP_EOL;
+							print "Door open: " . $signalDoor . PHP_EOL;
+						}
+						break;
+						case "Fridge-freezer":
+							$programStatus=$appliance['state']['status']['value_localized'];
+							$programType= $appliance['state']['programType']['value_raw'];
+							$programPhase=$appliance['state']['programPhase']['value_localized'];
+							$targetTemperature1 = $appliance['state']['targetTemperature'][0]['value_localized'];
+							$targetTemperature2 = $appliance['state']['targetTemperature'][1]['value_localized'];
+							$currentTemperature1 = $appliance['state']['Temperature'][0]['value_localized'];
+							$currentTemperature2 = $appliance['state']['Temperature'][1]['value_localized'];
+							$signalInfo = $appliance['state']['signalInfo'];
+							$signalFailure = $appliance['state']['signalFailure'];
+							$signalDoor = $appliance['state']['signalDoor'];
+							$topicapplbase = $topicbase . $appliance_id . '/';
+							
+							$mqtt->publish($topicapplbase . "ApplianceType", "'".$appliance_type."'");
+							$mqtt->publish($topicapplbase . "ProgramStatus", "'".$programStatus."'");
+							$mqtt->publish($topicapplbase . "ProgramType", "'".$programType."'");
+							$mqtt->publish($topicapplbase . "ProgramPhase", "'".$programPhase."'");
+							$mqtt->publish($topicapplbase . "TimeLeft", $timeleft);
+							$mqtt->publish($topicapplbase . "TimeRunning", $timerunning);
+							$mqtt->publish($topicapplbase . "TargetTemperature1", $targetTemperature1);
+							$mqtt->publish($topicapplbase . "TargetTemperature2", $targetTemperature2);
+							$mqtt->publish($topicapplbase . "CurrentTemperature1", $currentTemperature1);
+							$mqtt->publish($topicapplbase . "CurrentTemperature2", $currentTemperature2);
+							$mqtt->publish($topicapplbase . "InfoAvailable", $signalInfo);
+							$mqtt->publish($topicapplbase . "FailureSignal", $signalFailure);
+							$mqtt->publish($topicapplbase . "DoorSignal", $signalDoor);
+							if($debug){
+								print "Appliance type: " . $appliance_type . PHP_EOL;
+								print "Program status: " . $programStatus . PHP_EOL;
+								print "Program type: " . $programType . PHP_EOL;
+								print "Program phase: " . $programPhase . PHP_EOL;
+								print "Time left: " . $timeleft . PHP_EOL;
+								print "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+								print "Target Temperature 1: " . $targetTemperature1 . PHP_EOL;
+								print "Target Temperature 2: " . $targetTemperature2 . PHP_EOL;
+								print "Target Temperature 3: " . $targetTemperature3 . PHP_EOL;
+								print "Current Temperature 1: " . $currentTemperature1 . PHP_EOL;
+								print "Current Temperature 2: " . $currentTemperature2 . PHP_EOL;
+								print "Current Temperature 3: " . $currentTemperature3 . PHP_EOL;
+								print "Info available: " . $signalInfo . PHP_EOL;
+								print "Failure: " . $signalFailure . PHP_EOL;
+								print "Door open: " . $signalDoor . PHP_EOL;
+							}
+							break;
+								case "Clothes Dryer":
+						$programStatus=$appliance['state']['status']['value_localized'];
+						$programType= $appliance['state']['programType']['value_raw'];
+						$programPhaseRaw=$appliance['state']['programPhase']['value_raw'];
+						switch ($programPhaseRaw) {
+							case "512":
+								// Purpose unknown, observed when programmed (without phase) and off.
+								$programPhase="Not running";
+								break;
+							case "513":
+								$programPhase="Program Running";
+								break;
+							case "514":
+								$programPhase="Drying";
+								break;
+							case "515":
+								$programPhase="Machine Iron";
+								break;
+							case "516":
+								$programPhase="Hand Iron";
+								break;
+							case "517":
+								$programPhase="Normal";
+								break;
+							case "518":
+								$programPhase="Normal Plus";
+								break;
+							case "519":
+								$programPhase="Cooling down";
+								break;
+							case "520":
+								$programPhase="Hand Iron";
+								break;
+							case "521":
+								$programPhase="Anti-crease";
+								break;
+							case "522":
+								$programPhase="Finished";
+								break;
+							case "523":
+								$programPhase="Extra Dry";
+								break;
+							case "524":
+								$programPhase="Hand Iron";
+								break;
+							case "526":
+								$programPhase="Moisten";
+								break;
+							case "528":
+								$programPhase="Timed Drying";
+								break;
+							case "529":
+								$programPhase="Warm Air";
+								break;
+							case "530":
+								$programPhase="Steam Smoothing";
+								break;
+							case "531":
+								$programPhase="Comfort Cooling";
+								break;
+							case "532":
+								$programPhase="Rinse out lint";
+								break;
+							case "533":
+								$programPhase="Rinses";
+								break;
+							case "534":
+								$programPhase="Smoothing";
+								break;
+							case "538":
+								$programPhase="Slightly Dry";
+								break;						
+							case "539":
+								$programPhase="Safety Cooling";
+								break;
+							default:
+								$programPhase="Unknown: " . $programPhaseRaw;
+							break;
+						}
+						$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
+						$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
+						$topicapplbase = $topicbase . $appliance_id . '/';
+						$mqtt->publish($topicapplbase . "ApplianceType", "'".$appliance_type."'");
+						$mqtt->publish($topicapplbase . "ProgramStatus", "'".$programStatus."'");
+						$mqtt->publish($topicapplbase . "ProgramType", "'".$programType."'");
+						$mqtt->publish($topicapplbase . "ProgramPhase", "'".$programPhase."'");
+						$mqtt->publish($topicapplbase . "TimeLeft", $timeleft);
+						$mqtt->publish($topicapplbase . "TimeRunning", $timerunning);
+						if($debug){
+							print "Appliance type: " . $appliance_type . PHP_EOL;
+							print "Program status: " . $programStatus . PHP_EOL;
+							print "Program type: " . $programType . PHP_EOL;
+							print "Program phase: " . $programPhase . PHP_EOL;
+							print "Time left: " . $timeleft . PHP_EOL;
+							print "Time elapsed: " . $timerunning . PHP_EOL . PHP_EOL;
+						}
+						break;
+					default:
 					echo "Appliance type " . $appliance_type . " is not defined. Please define it, or send information to have it added." . PHP_EOL;
 					break;
 			}
