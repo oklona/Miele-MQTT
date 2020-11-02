@@ -548,9 +548,9 @@ function retrieveandpublish($folder,$mqtt) {
 					$targetTemperature1 = $appliance['state']['targetTemperature'][0]['value_localized'];
 					$targetTemperature2 = $appliance['state']['targetTemperature'][1]['value_localized'];
 					$targetTemperature3 = $appliance['state']['targetTemperature'][2]['value_localized'];
-					$currentTemperature1 = $appliance['state']['Temperature'][0]['value_localized'];
-					$currentTemperature2 = $appliance['state']['Temperature'][1]['value_localized'];
-					$currentTemperature3 = $appliance['state']['Temperature'][2]['value_localized'];
+					$currentTemperature1 = $appliance['state']['temperature'][0]['value_localized'];
+					$currentTemperature2 = $appliance['state']['temperature'][1]['value_localized'];
+					$currentTemperature3 = $appliance['state']['temperature'][2]['value_localized'];
 					$signalInfo = $appliance['state']['signalInfo'];
 					$signalFailure = $appliance['state']['signalFailure'];
 					$signalDoor = $appliance['state']['signalDoor'];
@@ -598,9 +598,9 @@ function retrieveandpublish($folder,$mqtt) {
 						$targetTemperature1 = $appliance['state']['targetTemperature'][0]['value_localized'];
 						$targetTemperature2 = $appliance['state']['targetTemperature'][1]['value_localized'];
 						$targetTemperature3 = $appliance['state']['targetTemperature'][2]['value_localized'];
-						$currentTemperature1 = $appliance['state']['Temperature'][0]['value_localized'];
-						$currentTemperature2 = $appliance['state']['Temperature'][1]['value_localized'];
-						$currentTemperature3 = $appliance['state']['Temperature'][2]['value_localized'];
+						$currentTemperature1 = $appliance['state']['temperature'][0]['value_localized'];
+						$currentTemperature2 = $appliance['state']['temperature'][1]['value_localized'];
+						$currentTemperature3 = $appliance['state']['temperature'][2]['value_localized'];
 						$signalInfo = $appliance['state']['signalInfo'];
 						$signalFailure = $appliance['state']['signalFailure'];
 						$signalDoor = $appliance['state']['signalDoor'];
@@ -645,8 +645,8 @@ function retrieveandpublish($folder,$mqtt) {
 							$programPhase=$appliance['state']['programPhase']['value_localized'];
 							$targetTemperature1 = $appliance['state']['targetTemperature'][0]['value_localized'];
 							$targetTemperature2 = $appliance['state']['targetTemperature'][1]['value_localized'];
-							$currentTemperature1 = $appliance['state']['Temperature'][0]['value_localized'];
-							$currentTemperature2 = $appliance['state']['Temperature'][1]['value_localized'];
+							$currentTemperature1 = $appliance['state']['temperature'][0]['value_localized'];
+							$currentTemperature2 = $appliance['state']['temperature'][1]['value_localized'];
 							$signalInfo = $appliance['state']['signalInfo'];
 							$signalFailure = $appliance['state']['signalFailure'];
 							$signalDoor = $appliance['state']['signalDoor'];
