@@ -26,8 +26,6 @@ Data: true
 
 The script has been tested using PHP 7.x on Linux.
 
-The code written currently covers Miele dishwashers, washing machines and dryers (thanks, Stoffi!). Run the script with parameter "-d" to retrieve all data about your appliances, send it to me, and I can add more appliance-support to the script. -Or you could add to the script through Github, and create a Pull Request (PR).
-
 <b>Command line switches</b><br>
 The script now support the following command line swithces:<br>
 "-s" or "--single": Just query data once, and quit. Using this, sending commands to the appliance will not work.<br>
