@@ -1,3 +1,11 @@
+v 3.0a1 - March 26th 2021
+ - Rewrote how devices are handled. Now all properties of all devices are reported, allowing us to disregard the appliance type.
+ - Added suggested handling if disconnected devices.
+ 
+v 2.0b3 - November 2020
+ - Error corrections
+ - Added some devices
+
 v 2.0b2 - February 18th 2020
 - Added support for command line switches "-d/--dump, -c/--create, -D/--debug, -j/--json, -s/--single".
 - Added support for reading defaults from miele-config2.php when creating new config file
