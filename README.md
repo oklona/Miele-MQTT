@@ -4,6 +4,8 @@ A very simple script to read data and issue commands via Miele@home cloud servic
 <b>Before first time use</b>
 The first time you run it, you will be asked for Client ID and Client Key. These keys are managed by Miele developers, so you need to send an email to developer@miele.com to retrieve these. According to the license agreement with Miele, these should not be distributed.
 
+You will also be asked for how many days before expiry to refresh token. I chose a default of 5 days, but normally 1 day is probalby sufficient. This means that 'this' number of days before your access token expires, the script will use the refresh token to request a new access token (and refresh token at the same time).
+
 Before using the script, you need to confirm for Miele that you want to allow the script to read and access your data. This cannot be done through the script, so you need to follow this procedure:
 
 - Go to https://www.miele.com/developer/swagger-ui/swagger.html
