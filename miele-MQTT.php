@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 3.0a01
+######		Version 3.1a01
 ######
 ################################################################################################################################################
 
@@ -27,9 +27,16 @@ function getRESTData($url,$postdata,$method,$content,$authorization='')
 {
 	global $debug;
 	global $json;
+	global $folder;
 	if($debug){
 		print "Authorization: " . $authorization . PHP_EOL;
-		print "Postdata: ". $postdata . PHP_EOL;
+		if (is_array($postdata)) {
+			print "Postdata: ". PHP_EOL;
+			var_dump($postdata);
+		}
+		else {
+			print "Postdata: ". $postdata . PHP_EOL;
+		}
 		print "Method: " . $method . PHP_EOL;
 		print "URL: " . $url . PHP_EOL;
 	}
@@ -52,11 +59,17 @@ function getRESTData($url,$postdata,$method,$content,$authorization='')
 	}
 	$result = curl_exec($ch);
 
+	$tmpfname = tempnam($folder,"PHP");
+	file_put_contents($tmpfname, $result);
+
 	if (curl_getinfo($ch,CURLINFO_RESPONSE_CODE) == 302 ) {
 		$returndata=curl_getinfo($ch,CURLINFO_REDIRECT_URL);
 	}
 	elseif (curl_getinfo($ch,CURLINFO_RESPONSE_CODE) == 401 ) {
 		$returndata=array("code"=>"Unauthorized");
+		if($debug){
+			print "401 - Unauthorized" . PHP_EOL;
+		}		
 	}
 	else {
 		$returndata=json_decode($result,true);
@@ -96,8 +109,6 @@ function prompt_silent($prompt = "Enter Password:") {
 }
 
 
-
-
 ################################################################################################################################################
 ######		createconfig - Function to prompt for config data, and create config file.
 ################################################################################################################################################
@@ -120,6 +131,8 @@ function createconfig($refresh=false) {
 		$configdefault=array(
 			'access_token'=> '',
 			'refresh_token'=> '',
+			'expiry_date' => '',
+			'timetorefresh' => '5',
 			'client_id'=> '',
 			'client_secret'=> '',
 			'country'=> '',
@@ -136,9 +149,10 @@ function createconfig($refresh=false) {
 		else {
 			$config=$configdefault;
 		}
-		$userid=readline("Username (email) to connect with [" . $config['email'] . "]:");
+		$userid=readline("Username (email) to connect with [" . $config['email'] . "]: ");
 		if($userid == "") {$userid=$config["email"];}
 		$password=prompt_silent("Please type your password: ");
+		$timetorefresh=readline("How many days before epiry to refresh token? [" . $config['timetorefresh'] . "]: ");
 		$country=readline('Please state country in the form of "no-NO, en-EN, etc."[' . $config["country"] . ']: ');
 		if($country == "") {$country=$config["country"];}
 
@@ -202,7 +216,6 @@ function createconfig($refresh=false) {
 		$mosquitto_pass=$config['mosquitto_pass'];
 		$topicbase=$config['topicbase'];
 		
-		rename($folder . '/miele-config2.php',$folder . '/miele-config2.php.org');
 	}
 
 
@@ -211,15 +224,29 @@ function createconfig($refresh=false) {
 		$postdata="";
 		$method='POST';
 		$data=getRESTData($url,$postdata,$method,$content);
-		$access_token = $data["access_token"];
-		$refresh_token = $data["refresh_token"];
-		$tokenscreated = true;
-		if($debug){print "Access token: " . $access_token . PHP_EOL;}
+		if(array_key_exists("access_token",$data)) {
+			$access_token = $data["access_token"];
+			$refresh_token = $data["refresh_token"];
+			$tokenscreated = true;
+			$expires_in = $data["expires_in"];
+			$date = new DateTime();
+        	$date->add(new DateInterval('PT'.$expires_in.'S'));
+        	$expiry_date = $date->getTimestamp();
+			if($debug){print "Access token: " . $access_token . PHP_EOL;}
+		}
+		else {
+			$tokenscreated = false;
+			if($debug){print "Access token could not be created! " . PHP_EOL;}
+			exit;
+		}
+		
 	}
 
 	if($tokenscreated == true ) {
 		if($debug){print "Tokens created successfully..." . PHP_EOL;}
 		$config="<?php" . PHP_EOL . "return array(" . PHP_EOL . "        'access_token'=> '" . $access_token . "'," . PHP_EOL . "        'refresh_token'=> '" . $refresh_token . "'," . PHP_EOL;
+		$config = $config . "	'expiry_date'=> '" . $expiry_date . "'," . PHP_EOL;
+		$config = $config . "	'timetorefresh'=> '" . $timetorefresh . "'," . PHP_EOL;
 		$config = $config . "	'email'=> '" . $userid . "'," . PHP_EOL;
 		$config = $config . "	'client_id'=> '" . $client_id . "'," . PHP_EOL;
 		$config = $config . "	'client_secret'=> '" . $client_secret . "'," . PHP_EOL;
@@ -231,6 +258,7 @@ function createconfig($refresh=false) {
 		$config = $config . "	'topicbase'=> '" . $topicbase . "'" . PHP_EOL;
 		$config = $config . ");" . PHP_EOL . "?>" . PHP_EOL . PHP_EOL;
 
+		rename($folder . '/miele-config2.php',$folder . '/miele-config2.php.org');
 		if (file_put_contents($folder . "/miele-config2.php", $config) <> false ) {
 			if($debug){print "Configuration file created!" . PHP_EOL;}
 			$configcreated=true;
@@ -239,6 +267,96 @@ function createconfig($refresh=false) {
 
 	return $configcreated;
 }
+
+
+################################################################################################################################################
+######		refreshtoken - Function to refresh authorization token.
+################################################################################################################################################
+function refreshtoken() {	
+	$configcreated=false;
+	$tokenscreated=false;
+	global $folder;
+	global $config;
+	global $debug;
+	global $access_token;
+	
+	$content="application/x-www-form-urlencoded";
+
+	$url='https://api.mcs3.miele.com/thirdparty/token';
+	#$postdata=array('client_id' => $config['client_id'], 'client_secret' => $config['client_secret'], 'refresh_token' => $config['refresh_token'], 'grant_type' => 'refresh_token');
+	$postdata='client_id='. $config['client_id'] . '&client_secret=' . $config['client_secret'] . '&refresh_token=' . $config['refresh_token'] . '&grant_type=refresh_token';
+	
+	$method='POST';
+	$data=getRESTData($url,$postdata,$method,$content);
+	if(array_key_exists("access_token",$data)) {
+		$access_token = $data["access_token"];
+		$refresh_token = $data["refresh_token"];
+		$tokenscreated = true;
+		$expires_in = $data["expires_in"];
+		$date = new DateTime();
+		$date->add(new DateInterval('PT'.$expires_in.'S'));
+		$expiry_date = $date->getTimestamp();
+		if($debug){print "Access token: " . $access_token . PHP_EOL;}
+	}
+	else {
+		$tokenscreated = false;
+		if($debug){print "Access token could not be refreshed! " . PHP_EOL;}
+		exit;
+	}
+	
+
+	if($tokenscreated == true ) {
+		if($debug){print "Tokens created successfully..." . PHP_EOL;}
+		$newconfig="<?php" . PHP_EOL . "return array(" . PHP_EOL . "	'access_token'=> '" . $access_token . "'," . PHP_EOL . "	'refresh_token'=> '" . $refresh_token . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'expiry_date'=> '" . $expiry_date . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'timetorefresh'=> '" . $config['timetorefresh'] . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'email'=> '" . $config['email'] . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'client_id'=> '" . $config['client_id'] . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'client_secret'=> '" . $config['client_secret'] . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'code'=> '" . $config['code'] . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'country'=> '" . $config['country'] . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'mosquitto_host'=> '" . $config['mosquitto_host'] . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'mosquitto_user'=> '" . $config['mosquitto_user'] . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'mosquitto_pass'=> '" . $config['mosquitto_pass'] . "'," . PHP_EOL;
+		$newconfig = $newconfig . "	'topicbase'=> '" . $config['topicbase'] . "'" . PHP_EOL;
+		$newconfig = $newconfig . ");" . PHP_EOL . "?>" . PHP_EOL . PHP_EOL;
+
+		rename($folder . '/miele-config2.php',$folder . '/miele-config2.php.org');
+		if (file_put_contents($folder . "/miele-config2.php", $newconfig) <> false ) {
+			if($debug){print "Configuration file created!" . PHP_EOL;}
+			$configcreated=true;
+		}
+	}
+	$config['access_token']=$access_token;
+	$config['refresh_token']=$refresh_token;
+	$config['expiry_date']=$expiry_date;
+
+	return $tokenscreated;
+}
+
+################################################################################################################################################
+######		checktokenrefresh - Function to check whether token is up for renewal.
+################################################################################################################################################
+function checktokenrefresh() {	
+	global $config;
+	global $debug;
+
+	$result=true;
+	if($debug){print "Checking token for expiry" . PHP_EOL; }
+	$date = new DateTime();
+    $diff = $config['expiry_date'] - ($date->getTimestamp());
+
+	if($debug){print "Token expires in " . $diff . " seconds, timetorefresh is " . $config['timetorefresh'] . " days." . PHP_EOL; }
+	$timetorefreshs= (int) ($config['timetorefresh'] * 3600 * 24);
+	if($debug){print "Token must be refreshed with " . $timetorefreshs . " seconds left" . PHP_EOL; }
+	if($diff < $timetorefreshs) {
+		if($debug){print "Refreshing token..." . PHP_EOL; }
+		$result=refreshtoken();
+	}
+
+	return $result;
+}
+
 
 ################################################################################################################################################
 ######
@@ -294,6 +412,7 @@ if($create) {
 }
 
 if($single) {
+	checktokenrefresh();
 	retrieveandpublish($folder,$mqtt);
 	exit(0);
 }
@@ -304,6 +423,7 @@ $mqtt->subscribe($topics, 0);
 $count=30;
 while($mqtt->proc()){
 	if ( $count==30) {
+		checktokenrefresh();
 		retrieveandpublish($folder,$mqtt);
 		$count=0;
 	}
