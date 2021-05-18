@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 3.1a01
+######		Version 3.1a02
 ######
 ################################################################################################################################################
 
@@ -59,8 +59,8 @@ function getRESTData($url,$postdata,$method,$content,$authorization='')
 	}
 	$result = curl_exec($ch);
 
-	$tmpfname = tempnam($folder,"PHP");
-	file_put_contents($tmpfname, $result);
+	#$tmpfname = tempnam($folder,"PHP");  ####  Used for debugging REST communications
+	#file_put_contents($tmpfname, $result);  ####  Used for debugging REST communications
 
 	if (curl_getinfo($ch,CURLINFO_RESPONSE_CODE) == 302 ) {
 		$returndata=curl_getinfo($ch,CURLINFO_REDIRECT_URL);

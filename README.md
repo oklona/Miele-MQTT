@@ -1,6 +1,9 @@
 # Miele-MQTT
 A very simple script to read data and issue commands via Miele@home cloud services, using Mosquitto MQTT
 
+<b>Upgrading from a pre-3.x version</b>
+If you have run the script previously, and just updated to the new version, you need to create a new config file. In order to do that, run the script with the parameter "-c" once. It is not necessary to rename/delete the old config file, as the old file, if it exists, will be used to read out default values.
+
 <b>Before first time use</b>
 The first time you run it, you will be asked for Client ID and Client Key. These keys are managed by Miele developers, so you need to send an email to developer@miele.com to retrieve these. According to the license agreement with Miele, these should not be distributed.
 
