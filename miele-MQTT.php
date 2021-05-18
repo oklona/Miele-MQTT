@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 3.1a01
+######		Version 3.1a03
 ######
 ################################################################################################################################################
 
@@ -59,8 +59,8 @@ function getRESTData($url,$postdata,$method,$content,$authorization='')
 	}
 	$result = curl_exec($ch);
 
-	$tmpfname = tempnam($folder,"PHP");
-	file_put_contents($tmpfname, $result);
+	#$tmpfname = tempnam($folder,"PHP");  ####  Used for debugging REST communications
+	#file_put_contents($tmpfname, $result);  ####  Used for debugging REST communications
 
 	if (curl_getinfo($ch,CURLINFO_RESPONSE_CODE) == 302 ) {
 		$returndata=curl_getinfo($ch,CURLINFO_REDIRECT_URL);
@@ -153,6 +153,7 @@ function createconfig($refresh=false) {
 		if($userid == "") {$userid=$config["email"];}
 		$password=prompt_silent("Please type your password: ");
 		$timetorefresh=readline("How many days before epiry to refresh token? [" . $config['timetorefresh'] . "]: ");
+		if($timetorefresh == "") {$timetorefresh=$config["timetorefresh"];}
 		$country=readline('Please state country in the form of "no-NO, en-EN, etc."[' . $config["country"] . ']: ');
 		if($country == "") {$country=$config["country"];}
 
@@ -258,7 +259,9 @@ function createconfig($refresh=false) {
 		$config = $config . "	'topicbase'=> '" . $topicbase . "'" . PHP_EOL;
 		$config = $config . ");" . PHP_EOL . "?>" . PHP_EOL . PHP_EOL;
 
-		rename($folder . '/miele-config2.php',$folder . '/miele-config2.php.org');
+		if (file_exists($folder . '/miele-config2.php') == true ) {
+			rename($folder . '/miele-config2.php',$folder . '/miele-config2.php.org');
+		}
 		if (file_put_contents($folder . "/miele-config2.php", $config) <> false ) {
 			if($debug){print "Configuration file created!" . PHP_EOL;}
 			$configcreated=true;
