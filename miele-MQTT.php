@@ -3,7 +3,7 @@
 ######
 ######		Miele-MQTT.php
 ######		Script by Ole Kristian Lona, to read data from Miele@home, and transfer through MQTT.
-######		Version 3.1a03
+######		Version 3.1b01
 ######
 ################################################################################################################################################
 
@@ -510,7 +510,11 @@ function retrieveandpublish($folder,$mqtt) {
 				$programPhaseStr=$appliance['state']['programPhase']['value_localized'];
 				$starttime=sprintf("%'.02d:%'.02d",$appliance['state']['startTime'][0],$appliance['state']['startTime'][1]);
 				$timeleft=sprintf("%'.02d:%'.02d",$appliance['state']['remainingTime'][0],$appliance['state']['remainingTime'][1]);
-				$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
+				if ( isset($appliance['state']['elapsedTime'][0])) {
+					$timerunning=sprintf("%'.02d:%'.02d",$appliance['state']['elapsedTime'][0],$appliance['state']['elapsedTime'][1]);
+				} else {
+					$timerunning="";
+				}
 				$light_on=$appliance['state']['light'];
 				$dryingstep=$appliance['state']['dryingStep']['value_localized'];
 				$ventilationstep=$appliance['state']['ventilationStep']['value_localized'];
