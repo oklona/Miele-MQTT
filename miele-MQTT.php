@@ -479,6 +479,7 @@ function retrieveandpublish($folder,$mqtt) {
 	global $json;
 	global $debug;
 	global $country;
+	global $config;
 
 	$authorization='';
 
@@ -553,18 +554,21 @@ function retrieveandpublish($folder,$mqtt) {
 				$ecoFeedback=$appliance['state']['ecoFeedback'];
 				$batteryLevel=$appliance['state']['batteryLevel'];
 		
+				$quote = isset($config['quote']) ? $config['quote'] : "'";
+				
+				
 				$topicapplbase = $topicbase . $appliance_id . '/';
-				$mqtt->publish($topicapplbase . "ApplianceType", "'".$appliance_type."'");
-				$mqtt->publish($topicapplbase . "ProgramName", "'".$programName."'");
-				$mqtt->publish($topicapplbase . "ProgramStatus", "'".$programStatus."'");
-				$mqtt->publish($topicapplbase . "ProgramType", "'".$programType."'");
-				$mqtt->publish($topicapplbase . "ProgramPhase", "'".$programPhaseStr."'");
+				$mqtt->publish($topicapplbase . "ApplianceType", $quote.$appliance_type.$quote);
+				$mqtt->publish($topicapplbase . "ProgramName", $quote.$programName.$quote);
+				$mqtt->publish($topicapplbase . "ProgramStatus", $quote.$programStatus.$quote);
+				$mqtt->publish($topicapplbase . "ProgramType", $quote.$programType.$quote);
+				$mqtt->publish($topicapplbase . "ProgramPhase", $quote.$programPhaseStr.$quote);
 				$mqtt->publish($topicapplbase . "StartTime", $starttime);
 				$mqtt->publish($topicapplbase . "TimeLeft", $timeleft);
 				$mqtt->publish($topicapplbase . "TimeRunning", $timerunning);
-				$mqtt->publish($topicapplbase . "LightON", "'" . $light_on . "'");
-				$mqtt->publish($topicapplbase . "DryingStep", "'" . $dryingstep . "'");
-				$mqtt->publish($topicapplbase . "VentilationStep", "'" . $ventilationstep . "'");
+				$mqtt->publish($topicapplbase . "LightON", $quote.$light_on.$quote);
+				$mqtt->publish($topicapplbase . "DryingStep", $quote.$dryingstep.$quote);
+				$mqtt->publish($topicapplbase . "VentilationStep", $quote.$ventilationstep.$quote);
 				$mqtt->publish($topicapplbase . "TargetTemperature1", $targetTemperature1);
 				$mqtt->publish($topicapplbase . "TargetTemperature2", $targetTemperature2);
 				$mqtt->publish($topicapplbase . "TargetTemperature3", $targetTemperature3);
