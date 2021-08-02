@@ -18,6 +18,7 @@ $mosquitto_pass='';
 $topicbase='';
 $access_token='';
 $config='';
+$country='';
 
 ################################################################################################################################################
 ######		getRESTData - Function used to retrieve REST data from server.
@@ -28,6 +29,7 @@ function getRESTData($url,$postdata,$method,$content,$authorization='')
 	global $debug;
 	global $json;
 	global $folder;
+
 	if($debug){
 		print "Authorization: " . $authorization . PHP_EOL;
 		if (is_array($postdata)) {
@@ -124,6 +126,7 @@ function createconfig($refresh=false) {
 	global $access_token;
 	global $create;
 	global $debug;
+	global $country;
 	
 	$content="application/x-www-form-urlencoded";
 
@@ -216,7 +219,7 @@ function createconfig($refresh=false) {
 		$mosquitto_user=$config['mosquitto_user'];
 		$mosquitto_pass=$config['mosquitto_pass'];
 		$topicbase=$config['topicbase'];
-		
+		$country=$config['country'];
 	}
 
 
@@ -400,6 +403,7 @@ $mosquitto_pass=$config['mosquitto_pass'];
 $topicbase=$config['topicbase'];
 $code=$config['code'];
 $access_token=$config['access_token'];
+$country=$config['country'];
 
 $client_id = "Miele-MQTT"; // make sure this is unique for connecting to sever - you could use uniqid()
 
@@ -439,6 +443,8 @@ $mqtt->close();
 
 function procmsg($topic, $msg){
 	global $access_token;
+	global $country;
+	
 	$commandTopic=explode('/',$topic);
 	for($i = 1; $i <= 10; $i++) {
 		if($commandTopic[$i] == "command") {
@@ -449,7 +455,8 @@ function procmsg($topic, $msg){
 	}
 	if($dump){echo "Sending command: " . $action . " to device: " . $appliance . PHP_EOL;}
 	if($dump){echo $msg . PHP_EOL;}
-	$url='https://api.mcs3.miele.com/v1/devices/' . $appliance . "/actions";
+	$url='https://api.mcs3.miele.com/v1/devices/' . $appliance . "/actions?language=";
+	$url .= !empty($country) ? substr($country, 0,2) : "en"; 
 	$authorization='Bearer ' . $access_token;
 	$method='PUT';
 	$postdata = array($action=>$msg);
@@ -471,11 +478,14 @@ function retrieveandpublish($folder,$mqtt) {
 	global $dump;
 	global $json;
 	global $debug;
+	global $country;
+	global $config;
 
 	$authorization='';
 
 	if (strlen($access_token) >> 0 ) {
-		$url='https://api.mcs3.miele.com/v1/devices/';
+		$url='https://api.mcs3.miele.com/v1/devices?language=';
+		$url .= !empty($country) ? substr($country, 0,2) : "en"; 
 		$authorization='Bearer ' . $access_token;
 		$method='GET';
 		$data=getRESTData($url,'',$method,'application/json',$authorization);
@@ -544,18 +554,21 @@ function retrieveandpublish($folder,$mqtt) {
 				$ecoFeedback=$appliance['state']['ecoFeedback'];
 				$batteryLevel=$appliance['state']['batteryLevel'];
 		
+				$quote = isset($config['quote']) ? $config['quote'] : "'";
+				
+				
 				$topicapplbase = $topicbase . $appliance_id . '/';
-				$mqtt->publish($topicapplbase . "ApplianceType", "'".$appliance_type."'");
-				$mqtt->publish($topicapplbase . "ProgramName", "'".$programName."'");
-				$mqtt->publish($topicapplbase . "ProgramStatus", "'".$programStatus."'");
-				$mqtt->publish($topicapplbase . "ProgramType", "'".$programType."'");
-				$mqtt->publish($topicapplbase . "ProgramPhase", "'".$programPhaseStr."'");
+				$mqtt->publish($topicapplbase . "ApplianceType", $quote.$appliance_type.$quote);
+				$mqtt->publish($topicapplbase . "ProgramName", $quote.$programName.$quote);
+				$mqtt->publish($topicapplbase . "ProgramStatus", $quote.$programStatus.$quote);
+				$mqtt->publish($topicapplbase . "ProgramType", $quote.$programType.$quote);
+				$mqtt->publish($topicapplbase . "ProgramPhase", $quote.$programPhaseStr.$quote);
 				$mqtt->publish($topicapplbase . "StartTime", $starttime);
 				$mqtt->publish($topicapplbase . "TimeLeft", $timeleft);
 				$mqtt->publish($topicapplbase . "TimeRunning", $timerunning);
-				$mqtt->publish($topicapplbase . "LightON", "'" . $light_on . "'");
-				$mqtt->publish($topicapplbase . "DryingStep", "'" . $dryingstep . "'");
-				$mqtt->publish($topicapplbase . "VentilationStep", "'" . $ventilationstep . "'");
+				$mqtt->publish($topicapplbase . "LightON", $quote.$light_on.$quote);
+				$mqtt->publish($topicapplbase . "DryingStep", $quote.$dryingstep.$quote);
+				$mqtt->publish($topicapplbase . "VentilationStep", $quote.$ventilationstep.$quote);
 				$mqtt->publish($topicapplbase . "TargetTemperature1", $targetTemperature1);
 				$mqtt->publish($topicapplbase . "TargetTemperature2", $targetTemperature2);
 				$mqtt->publish($topicapplbase . "TargetTemperature3", $targetTemperature3);
