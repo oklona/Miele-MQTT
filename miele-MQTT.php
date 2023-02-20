@@ -584,6 +584,8 @@ function retrieveandpublish($folder,$mqtt) {
 				$mqtt->publish($topicapplbase . "SpinningSpeed", $spinningSpeed);
 				$mqtt->publish($topicapplbase . "EcoFeedbackEnabled", $ecoFeedback);
 				$mqtt->publish($topicapplbase . "BatteryLevel", $batteryLevel);
+                                $mqtt->publish($topicapplbase . "WaterConsumption", $waterconsumption);
+                                $mqtt->publish($topicapplbase . "PowerConsumption", $powerconsumption);
 
 				if($debug){
 					print "Appliance type: " . $appliance_type . PHP_EOL;
@@ -614,6 +616,8 @@ function retrieveandpublish($folder,$mqtt) {
 					print "SpinningSpeed: " . $spinningSpeed . PHP_EOL;
 					print "EcoFeedbackEnabled: " . $ecoFeedback . PHP_EOL;
 					print "BatteryLevel: " . $batteryLevel . PHP_EOL;
+                                        print "Water Consumption: " . $waterconsumption . PHP_EOL;
+                                        print "Power Consumption: " . $powerconsumption . PHP_EOL;
 				}
 			}
 		else {
