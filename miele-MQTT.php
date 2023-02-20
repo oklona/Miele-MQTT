@@ -554,9 +554,10 @@ function retrieveandpublish($folder,$mqtt) {
 				$spinningSpeed=$appliance['state']['spinningSpeed']['value_localized'];
 				$ecoFeedback=$appliance['state']['ecoFeedback'];
 				$batteryLevel=$appliance['state']['batteryLevel'];
+				$waterconsumption=$appliance['state']['ecoFeedback']['currentWaterConsumption']['value'];
+                                $powerconsumption=$appliance['state']['ecoFeedback']['currentEnergyConsumption']['value'];
 				
-				
-				$topicapplbase = $topicbase . $appliance_id . '/';
+								$topicapplbase = $topicbase . $appliance_id . '/';
 				$mqtt->publish($topicapplbase . "ApplianceType", $appliance_type);
 				$mqtt->publish($topicapplbase . "ProgramName", $programName);
 				$mqtt->publish($topicapplbase . "ProgramStatus", $programStatus);
