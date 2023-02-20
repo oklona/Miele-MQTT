@@ -15,6 +15,7 @@ $code='';
 $mosquitto_host='';
 $mosquitto_user='';
 $mosquitto_pass='';
+$mosquitto_port='';
 $topicbase='';
 $access_token='';
 $config='';
