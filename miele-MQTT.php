@@ -400,6 +400,7 @@ $count=0;
 $mosquitto_host=$config['mosquitto_host'];
 $mosquitto_user=$config['mosquitto_user'];
 $mosquitto_pass=$config['mosquitto_pass'];
+$mosquitto_port=$config['mosquitto_port'];
 $topicbase=$config['topicbase'];
 $code=$config['code'];
 $access_token=$config['access_token'];
@@ -407,7 +408,7 @@ $country=$config['country'];
 
 $client_id = "Miele-MQTT"; // make sure this is unique for connecting to sever - you could use uniqid()
 
-$mqtt = new Bluerhinos\phpMQTT($mosquitto_host, "1883", $client_id);
+$mqtt = new Bluerhinos\phpMQTT($mosquitto_host, $mosquitto_port, $client_id);
 
 if(!$mqtt->connect(true, NULL, $mosquitto_user, $mosquitto_pass)) {
 	exit(1);
